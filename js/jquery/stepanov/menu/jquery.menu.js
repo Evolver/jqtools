@@ -130,6 +130,10 @@ jQuery.fn.extend({
     // do not reload menu's cache all the time
     if( typeof options.cache =='undefined')
       options.cache =false;
+      
+    // element where to store and take items from if caching is enabled
+    if( typeof options.container =='undefined')
+      options.container =null;
     
     // iterate each matched element
     this.each( function(){
@@ -155,13 +159,18 @@ jQuery.fn.extend({
       // store data
       jQuery(this)
         .data( 'options', options)
-        .data( 'origin', origin);
+        .data( 'origin', origin)
+        .data( 'initialized', true);
       
       // see if submenu already exists
       if( jQuery(this).find( '> div.submenu').size() >0) {
         // initialize all submenu items
         jQuery(this)
           .find( '> div.submenu > div')
+          .filter( function(){
+            // filter out already initialized menu items
+            return !jQuery(this).data( 'initialized');
+          })
           .menu( options);
           
       } else {
@@ -244,17 +253,17 @@ jQuery.fn.extend({
       var nodeId =this.getAttribute( 'node');
       var options =jQuery(this).data( 'options');
       
-      // see if there are menus opened on another levels than current node
-      //  and close them
-      jQuery(this)._menuCloseParentLevels();
-      
       // see if root node, and if not, remove selected class
       if( this.getAttribute( 'node') !==null) {
         // remove selected class from all nodes
         jQuery(this.parentNode)
           .find( '> div')
-          .removeClass( 'selected');
+          .removeClass( 'focused');
       }
+      
+      // see if there are menus opened on another levels than current node
+      //  and close them
+      jQuery(this)._menuCloseParentLevels();
 
       if( this.getAttribute( 'submenu') ===null || this.getAttribute( 'submenu') =='yes') {
         // got submenu, render it
@@ -264,11 +273,6 @@ jQuery.fn.extend({
         if( options.cache && submenu.find( '> div').size() >0) {
           // close opened submenus
           submenu.find( '> div').menuClose();
-          
-          // show submenu if it is hidden
-          //if( jQuery(this).find( '> div.submenu:hidden').size() >0) {
-            // show factory effects
-          //}
   
         } else {
           // load menu
@@ -302,46 +306,50 @@ jQuery.fn.extend({
             .menu( options);
         }
         
-        // show subnode to be able to correctly position it on the screen
-        submenu.show();
+        // see if submenu is hidden, and if is, show it
+        if( jQuery(this).find( '> div.submenu:hidden').size() >0) {
+        
+          // show subnode to be able to correctly position it on the screen
+          submenu.show();
+            
+          // call menu positioning callback
+          var applyFactoryEffects =options.draw( submenu.get( 0));
+            
+          // see if menu is absolute, and if it is, see if it fits the user's viewport
+          if( jQuery(this).data( 'absolute') && options.alignToViewport)
+            jQuery(this).menuAlignToViewport();
+                    
+          // see if factory effects need to be displayed
+          if( applyFactoryEffects) {
           
-        // call menu positioning callback
-        var applyFactoryEffects =options.draw( submenu.get( 0));
+            // hide submenu
+            submenu.hide();
           
-        // see if menu is absolute, and if it is, see if it fits the user's viewport
-        if( jQuery(this).data( 'absolute') && options.alignToViewport)
-          jQuery(this).menuAlignToViewport();
-                  
-        // see if factory effects need to be displayed
-        if( applyFactoryEffects) {
-        
-          // hide submenu
-          submenu.hide();
-        
-          // apply factory effects
-        
-          if( options.effect ==jQuery.MENU_EFFECT_NONE) {
-            // instant update
-            submenu.show();
-              
-          } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
-            // slide effect
-            submenu.show( 'fast');
-              
-          } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
-            // slide effect
-            submenu.slideDown( 'fast');
-              
-          } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
-            // slide effect
-            submenu.fadeIn( 'fast');
+            // apply factory effects
+          
+            if( options.effect ==jQuery.MENU_EFFECT_NONE) {
+              // instant update
+              submenu.show();
+                
+            } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
+              // slide effect
+              submenu.show( 'fast');
+                
+            } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
+              // slide effect
+              submenu.slideDown( 'fast');
+                
+            } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
+              // slide effect
+              submenu.fadeIn( 'fast');
+            }
           }
         }
       }
         
       // add selected class to the menu item
       jQuery(this)
-        .addClass( 'selected');
+        .addClass( 'focused');
         
       // trigger focus handler
       options.focus( this.getAttribute( 'node'), this);
@@ -371,36 +379,24 @@ jQuery.fn.extend({
         // instant update
         submenu
           .hide();
-          
-        //if( !options.cache)
-        //  submenu.html( '');
         
       } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
         // slide
-        submenu.hide( 'fast', function(){
-          //if( !options.cache)
-          //  jQuery( this).html( '');
-        });
+        submenu.hide( 'fast');
         
       } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
         // slide
-        submenu.slideUp( 'fast', function(){
-          //if( !options.cache)
-          //  jQuery( this).html( '');
-        });
+        submenu.slideUp( 'fast');
         
       } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
         // slide
-        submenu.fadeOut( 'fast', function(){
-          //if( !options.cache)
-          //  jQuery( this).html( '');
-        });
+        submenu.fadeOut( 'fast');
         
       }
       
       // remove selected class
       jQuery(this)
-        .removeClass( 'selected');
+        .removeClass( 'focused');
 
     });
     
@@ -417,7 +413,7 @@ jQuery.fn.extend({
         
       // get container
       var container =this.parentNode;
-      
+
       // reference self
       var self =this;
       
@@ -431,7 +427,6 @@ jQuery.fn.extend({
         
       // check next upper level
       jQuery( container.parentNode)._menuCloseParentLevels();
-      
     });
   },
   
