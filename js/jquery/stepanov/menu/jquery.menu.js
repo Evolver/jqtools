@@ -126,6 +126,10 @@ jQuery.fn.extend({
     // menu closing delay in ms
     if( typeof options.closeDelay =='undefined')
       options.closeDelay =1000;
+      
+    // do not reload menu's cache all the time
+    if( typeof options.cache =='undefined')
+      options.cache =false;
     
     // iterate each matched element
     this.each( function(){
@@ -147,16 +151,31 @@ jQuery.fn.extend({
           jQuery(this)._menuBeginCloseTiming();
         });
       }
-
-      // store handlers
+      
+      // store data
       jQuery(this)
         .data( 'options', options)
-        .data( 'origin', origin)
-        .append( '<div class="submenu"></div>')
-        // initially hide submenu
-        .find( '> div.submenu')
-        .hide()
-        .end()
+        .data( 'origin', origin);
+      
+      // see if submenu already exists
+      if( jQuery(this).find( '> div.submenu').size() >0) {
+        // initialize all submenu items
+        jQuery(this)
+          .find( '> div.submenu > div')
+          .menu( options);
+          
+      } else {
+        // manually create submenu
+        jQuery(this).append( '<div class="submenu"></div>');
+      }
+      
+      // hide submenu
+      jQuery(this)
+          .find( '> div.submenu')
+          .hide();
+
+      // bind events
+      jQuery(this)
         
         // listen to click event on current item
         .click( function( e){
@@ -222,6 +241,7 @@ jQuery.fn.extend({
     this.each( function(){
       
       // get options
+      var nodeId =this.getAttribute( 'node');
       var options =jQuery(this).data( 'options');
       
       // see if there are menus opened on another levels than current node
@@ -235,45 +255,55 @@ jQuery.fn.extend({
           .find( '> div')
           .removeClass( 'selected');
       }
-      
-      // see if current menu is already loaded
-      if( jQuery(this).find( '> div.submenu > div').size() >0) {
-        // close opened submenus
-        jQuery(this).find( '> div.submenu > div').menuClose();
 
-      } else if( this.getAttribute( 'submenu') ===null || this.getAttribute( 'submenu') =='yes') {
+      if( this.getAttribute( 'submenu') ===null || this.getAttribute( 'submenu') =='yes') {
         // got submenu, render it
+        var submenu =jQuery(this).find( '> div.submenu');
           
-        // get properties
-        var nodeId =this.getAttribute( 'node');
-        
-        // node container
-        var nodes ={};
-        
-        switch( options.type) {
-          // load from callback
-          case jQuery.MENU_FROM_CALLBACK:
-            nodes =options.callback( nodeId, this);
-          break;
-          // load from url
-          case jQuery.MENU_FROM_URL:
-            nodes =jQuery._menuItemsFromUrl( nodeId, options);
-          break;
+        // see if caching is enabled and current menu is already loaded
+        if( options.cache && submenu.find( '> div').size() >0) {
+          // close opened submenus
+          submenu.find( '> div').menuClose();
+          
+          // show submenu if it is hidden
+          //if( jQuery(this).find( '> div.submenu:hidden').size() >0) {
+            // show factory effects
+          //}
+  
+        } else {
+          // load menu
+          var nodes ={};
+          
+          switch( options.type) {
+            // load from callback
+            case jQuery.MENU_FROM_CALLBACK:
+              nodes =options.callback( nodeId, this);
+            break;
+            // load from url
+            case jQuery.MENU_FROM_URL:
+              nodes =jQuery._menuItemsFromUrl( nodeId, options);
+            break;
+          }
+          
+          // render nodes
+          var html ='';
+          for( k in nodes)
+            html += '<div node="' +k +'" submenu="' +(nodes[ k].hasSubmenu ? 'yes' : 'no') +'">' +
+                      '<div class="item">' +nodes[ k].html +'</div>' +
+                    '</div>';
+                    
+          // assign html
+          submenu
+            .html( html);
+            
+          // initialize each menu item
+          submenu
+            .find( '> div')
+            .menu( options);
         }
         
-        // render nodes
-        var html ='';
-        for( k in nodes)
-          html += '<div node="' +k +'" submenu="' +(nodes[ k].hasSubmenu ? 'yes' : 'no') +'">' +
-                    '<div class="item">' +nodes[ k].html +'</div>' +
-                  '</div>';
-                  
-        // assign html
-        var submenu =jQuery(this).find( '> div.submenu');
-        submenu
-          .html( html)
-          // show subnode to be able to correctly position it on the screen
-          .show();
+        // show subnode to be able to correctly position it on the screen
+        submenu.show();
           
         // call menu positioning callback
         var applyFactoryEffects =options.draw( submenu.get( 0));
@@ -307,11 +337,6 @@ jQuery.fn.extend({
             submenu.fadeIn( 'fast');
           }
         }
-          
-        // initialize each menu item
-        jQuery(this)
-          .find( '> div.submenu > div')
-          .menu( options);
       }
         
       // add selected class to the menu item
@@ -345,28 +370,30 @@ jQuery.fn.extend({
       if( options.effect ==jQuery.MENU_EFFECT_NONE) {
         // instant update
         submenu
-          .html( '')
           .hide();
+          
+        //if( !options.cache)
+        //  submenu.html( '');
         
       } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
         // slide
         submenu.hide( 'fast', function(){
-          jQuery( this)
-            .html( '');
+          //if( !options.cache)
+          //  jQuery( this).html( '');
         });
         
       } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
         // slide
         submenu.slideUp( 'fast', function(){
-          jQuery( this)
-            .html( '');
+          //if( !options.cache)
+          //  jQuery( this).html( '');
         });
         
       } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
         // slide
         submenu.fadeOut( 'fast', function(){
-          jQuery( this)
-            .html( '');
+          //if( !options.cache)
+          //  jQuery( this).html( '');
         });
         
       }
