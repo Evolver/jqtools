@@ -14,36 +14,7 @@ jQuery.extend({
   MENU_EFFECT_NONE: 'none',
   MENU_EFFECT_FADE: 'fade',
   MENU_EFFECT_SLIDE_DOWN: 'slideDown',
-  MENU_EFFECT_SLIDE_OUT: 'slideOut',
-  
-  // load menu items from url
-  _menuItemsFromUrl: function( nodeId, options) {
-    
-    // return value
-    var ret ={};
-    var req =options.requestData;
-    // append node id to the request data
-    req[ options.varName] =nodeId;
-    
-    jQuery.ajax({
-      async: false,
-      cache: false,
-      data: req,
-      dataType: 'json',
-      timeout: options.timeout,
-      type: 'POST',
-      url: options.url,
-      
-      // handle success
-      success: function( data) {
-        // assign return data
-        ret =data;
-      }
-    });
-
-    // return nodes
-    return ret;
-  }
+  MENU_EFFECT_SLIDE_OUT: 'slideOut'
   
 });
 
@@ -101,11 +72,27 @@ jQuery.fn.extend({
       
     // menu select handler
     if( typeof options.select =='undefined')
-      options.select =function( id) {};
+      options.select =function( id, element) {};
       
-    // menu focus handler
-    if( typeof options.focus =='undefined')
-      options.focus =function( id) {};
+    // menu open handler
+    if( typeof options.open =='undefined')
+      options.open =function( id, element) {};
+      
+    // menu close handler
+    if( typeof options.close =='undefined')
+      options.close =function( id, element) {};
+      
+    // function to call when loading nodes from url
+    if( typeof options.beforeLoadUrl =='undefined')
+      options.beforeLoadUrl =function( id, element) {};
+      
+    // menu url open handler
+    if( typeof options.loadUrlSuccess =='undefined')
+      options.loadUrlSuccess =function( id, element) {};
+      
+    // menu url error handler
+    if( typeof options.loadUrlError =='undefined')
+      options.loadUrlError =function( id, element) {};
       
     // menu draw handler
     if( typeof options.draw =='undefined')
@@ -130,11 +117,7 @@ jQuery.fn.extend({
     // do not reload menu's cache all the time
     if( typeof options.cache =='undefined')
       options.cache =false;
-      
-    // element where to store and take items from if caching is enabled
-    if( typeof options.container =='undefined')
-      options.container =null;
-    
+
     // iterate each matched element
     this.each( function(){
       
@@ -285,7 +268,7 @@ jQuery.fn.extend({
             break;
             // load from url
             case jQuery.MENU_FROM_URL:
-              nodes =jQuery._menuItemsFromUrl( nodeId, options);
+              nodes =jQuery(this)._menuItemsFromUrl( nodeId, options);
             break;
           }
           
@@ -344,15 +327,15 @@ jQuery.fn.extend({
               submenu.fadeIn( 'fast');
             }
           }
+          
+          // trigger open handler
+          options.open( this.getAttribute( 'node'), this);
         }
       }
         
       // add selected class to the menu item
       jQuery(this)
         .addClass( 'focused');
-        
-      // trigger focus handler
-      options.focus( this.getAttribute( 'node'), this);
       
     });
     
@@ -362,13 +345,14 @@ jQuery.fn.extend({
   menuClose: function() {
     // iterate each item
     this.each( function(){
-      // see if menu has any submenus
-      if( jQuery(this).find( '> div.submenu > div').size() ==0)
-        return;
-        
       // get options
+      var nodeId =this.getAttribute( 'node');
       var options =jQuery(this).data( 'options');
-  
+
+      // see if menu is already closed
+      if( jQuery(this).find( '> div.submenu:hidden').size() >0)
+        return;
+
       var submenu =jQuery(this)
         .find( '> div.submenu > div')
         .menuClose()
@@ -397,6 +381,9 @@ jQuery.fn.extend({
       // remove selected class
       jQuery(this)
         .removeClass( 'focused');
+        
+      // call close callback
+      options.close( nodeId, this);
 
     });
     
@@ -534,6 +521,51 @@ jQuery.fn.extend({
         jQuery(origin).removeData( 'timer');
       }
     });
+  },
+  
+  // load menu items from url
+  _menuItemsFromUrl: function( nodeId, options) {
+
+    if( this.size() ==0)
+      return {};// no nodes matched
+      
+    var elem =this.get( 0);
+    
+    // call function to display optional preloader if needed
+    options.beforeLoadUrl( nodeId, elem);
+
+    // return value
+    var ret ={};
+    var req =options.requestData;
+    // append node id to the request data
+    req[ options.varName] =nodeId;
+    
+    jQuery.ajax({
+      async: false,
+      cache: false,
+      data: req,
+      dataType: 'json',
+      timeout: options.timeout,
+      type: 'POST',
+      url: options.url,
+      
+      // handle success
+      success: function( data) {
+        // assign return data
+        ret =data;
+        
+        // open url success
+        options.loadUrlSuccess( nodeId, elem);
+      },
+      
+      // handle error
+      error: function() {
+        options.loadUrlError( nodeId, elem);
+      }
+    });
+
+    // return nodes
+    return ret;
   }
 
 });
