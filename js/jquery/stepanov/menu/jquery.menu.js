@@ -103,6 +103,10 @@ jQuery.fn.extend({
     if( typeof options.select =='undefined')
       options.select =function( id) {};
       
+    // menu focus handler
+    if( typeof options.focus =='undefined')
+      options.focus =function( id) {};
+      
     // menu draw handler
     if( typeof options.draw =='undefined')
       options.draw =function( menu){ return true; /* apply factory effects */};
@@ -217,19 +221,31 @@ jQuery.fn.extend({
     // iterate each menu we have to open
     this.each( function(){
       
+      // get options
+      var options =jQuery(this).data( 'options');
+      
       // see if there are menus opened on another levels than current node
       //  and close them
       jQuery(this)._menuCloseParentLevels();
+      
+      // see if root node, and if not, remove selected class
+      if( this.getAttribute( 'node') !==null) {
+        // remove selected class from all nodes
+        jQuery(this.parentNode)
+          .find( '> div')
+          .removeClass( 'selected');
+      }
       
       // see if current menu is already loaded
       if( jQuery(this).find( '> div.submenu > div').size() >0) {
         // close opened submenus
         jQuery(this).find( '> div.submenu > div').menuClose();
-        
-      } else {
+
+      } else if( this.getAttribute( 'submenu') ===null || this.getAttribute( 'submenu') =='yes') {
+        // got submenu, render it
+          
         // get properties
         var nodeId =this.getAttribute( 'node');
-        var options =jQuery(this).data( 'options');
         
         // node container
         var nodes ={};
@@ -248,7 +264,7 @@ jQuery.fn.extend({
         // render nodes
         var html ='';
         for( k in nodes)
-          html += '<div node="' +k +'">' +
+          html += '<div node="' +k +'" submenu="' +(nodes[ k].hasSubmenu ? 'yes' : 'no') +'">' +
                     '<div class="item">' +nodes[ k].html +'</div>' +
                   '</div>';
                   
@@ -298,11 +314,12 @@ jQuery.fn.extend({
           .menu( options);
       }
         
-      // FIXME: menu opening should be triggered here
-      
       // add selected class to the menu item
       jQuery(this)
         .addClass( 'selected');
+        
+      // trigger focus handler
+      options.focus( this.getAttribute( 'node'), this);
       
     });
     
