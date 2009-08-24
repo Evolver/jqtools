@@ -3369,6 +3369,7 @@ jQuery.extend({
 		contentType: "application/x-www-form-urlencoded",
 		processData: true,
 		async: true,
+		requestPolling: true,
 		/*
 		timeout: 0,
 		data: null,
@@ -3551,18 +3552,8 @@ jQuery.extend({
 
 		// Wait for a response to come back
 		var onreadystatechange = function(isTimeout){
-			// The request was aborted, clear the interval and decrement jQuery.active
-			if (xhr.readyState == 0) {
-				if (ival) {
-					// clear poll interval
-					clearInterval(ival);
-					ival = null;
-					// Handle the global AJAX counter
-					if ( s.global && ! --jQuery.active )
-						jQuery.event.trigger( "ajaxStop" );
-				}
-			// The transfer is complete and the data is available, or the request timed out
-			} else if ( !requestDone && xhr && (xhr.readyState == 4 || isTimeout == "timeout") ) {
+			// Process request complete, request timeout and request abort events
+			if ( !requestDone && xhr && (xhr.readyState == 4 || xhr.readyState == 0 || isTimeout == "timeout") ) {
 				requestDone = true;
 
 				// clear poll interval
@@ -3616,8 +3607,13 @@ jQuery.extend({
 		};
 
 		if ( s.async ) {
-			// don't attach the handler to the request, just poll it instead
-			var ival = setInterval(onreadystatechange, 13);
+		  if( s.requestPolling) {
+			  // don't attach the handler to the request, just poll it instead
+			  var ival = setInterval(onreadystatechange, 13);
+			  
+		  } else {
+		    xhr.onreadystatechange =onreadystatechange;
+		  }
 
 			// Timeout checker
 			if ( s.timeout > 0 )
