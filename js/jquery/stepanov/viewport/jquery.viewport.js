@@ -4,6 +4,13 @@
   * URL: http://www.stepanov.lv
   */
 
+jQuery.extend({
+  
+  // library version
+  viewportVersion: 1.0
+  
+});
+
 jQuery.fn.extend({
   
   // calculate viewport information for specified element
@@ -13,30 +20,31 @@ jQuery.fn.extend({
     
     // get first element in the index
     var elem =this.get(0);
+    var jElem =jQuery(elem);
     var isDocument =elem.nodeName =='#document';
     
-    var viewportWidth =isDocument ? jQuery(window).width() : jQuery(elem).outerWidth( false);
-    var viewportHeight =isDocument ? jQuery(window).height() : jQuery(elem).outerHeight( false);
-    var documentWidth =isDocument ? jQuery(elem).width() : elem.scrollWidth;
-    var documentHeight =isDocument ? jQuery(elem).height() : elem.scrollHeight;
-    var scrollLeft =jQuery(elem).scrollLeft();
-    var scrollTop =jQuery(elem).scrollTop();
+    var viewportWidth =isDocument ? jQuery(window).width() : jElem.outerWidth( false);
+    var viewportHeight =isDocument ? jQuery(window).height() : jElem.outerHeight( false);
+    var documentWidth =isDocument ? jElem.width() : elem.scrollWidth;
+    var documentHeight =isDocument ? jElem.height() : elem.scrollHeight;
+    var scrollLeft =jElem.scrollLeft();
+    var scrollTop =jElem.scrollTop();
     
     if( $.browser.safari && !isDocument) {
       // webkit has bugs with right margin calculation from getComputedStyle(), so temporarily
       //  set elements display to 'inline-block', calculate dimensions, and restore display prop
-      var disp =jQuery( elem).css( 'display');
-      jQuery( elem).css( 'display', 'inline-block');
+      var disp =jElem.css( 'display');
+      jElem.css( 'display', 'inline-block');
       
-      var width =jQuery(elem).outerWidth( true);
-      var height =jQuery(elem).outerHeight( true);
+      var width =jElem.outerWidth( true);
+      var height =jElem.outerHeight( true);
       
-      jQuery( elem).css( 'display', disp);
+      jElem.css( 'display', disp);
       
     } else {
       // use overall formula
-      var width =isDocument ? jQuery(elem).width() : jQuery(elem).outerWidth( true);
-      var height =isDocument ? jQuery(elem).height() : jQuery(elem).outerHeight( true);
+      var width =isDocument ? jElem.width() : jElem.outerWidth( true);
+      var height =isDocument ? jElem.height() : jElem.outerHeight( true);
       
     }
     
@@ -59,24 +67,33 @@ jQuery.fn.extend({
   // align element to viewport
   alignToViewport: function( options) {
     // alignment gap in pixels
-    if( typeof options.gap =='undefined')
+    if( options.gap ===undefined)
       options.gap =0;
-    
+      
+    // first of all, hide all elements, because if elements are shown at this point,
+    //  and if there is need to reposition them, after repositioning there may be gaps
+    //  left because of the disappeared scrollbars
+    this.hide();
+      
     // get document viewport
     var viewport =jQuery(document).viewport();
     
+    // show elements
+    this.show();
+    
     // iterate each element
     this.each( function(){
+      var jThis =jQuery(this);
       
-      jQuery(this)
+      jThis
         .data( 'viewportHorizAlign', null)
         .data( 'viewportVertAlign', null);
       
       // get dimensions
-      var offs =jQuery(this).offset();
-      var pos =jQuery(this).position();
-      var width =jQuery(this).outerWidth( true);
-      var height =jQuery(this).outerHeight( true);
+      var offs =jThis.offset();
+      var pos =jThis.position();
+      var width =jThis.outerWidth( true);
+      var height =jThis.outerHeight( true);
       
       viewport.visibleLeft +=options.gap;
       viewport.visibleRight -=options.gap;
@@ -85,24 +102,24 @@ jQuery.fn.extend({
       
       // reposition by x
       if( viewport.visibleLeft >offs.left) {
-        jQuery(this)
+        jThis
           .css( 'left', pos.left +( viewport.visibleLeft -offs.left))
           .data( 'viewportHorizAlign', 'left');
         
       } else if( viewport.visibleRight <(offs.left +width)) {
-        jQuery(this)
+        jThis
           .css( 'left', pos.left -( offs.left +width -viewport.visibleRight))
           .data( 'viewportHorizAlign', 'right');
       }
       
       // reposition by y
       if( viewport.visibleTop >offs.top) {
-        jQuery(this)
+        jThis
           .css( 'top', pos.top +( viewport.visibleTop -offs.top))
           .data( 'viewportVertAlign', 'top');
         
       } else if( viewport.visibleBottom <(offs.top +height)) {
-        jQuery(this)
+        jThis
           .css( 'top', pos.top -( offs.top +height -viewport.visibleBottom))
           .data( 'viewportVertAlign', 'bottom');
       }

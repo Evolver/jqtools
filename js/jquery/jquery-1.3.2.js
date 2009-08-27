@@ -3617,7 +3617,7 @@ jQuery.extend({
 
 			// Timeout checker
 			if ( s.timeout > 0 )
-				setTimeout(function(){
+				var ttimeout =setTimeout(function(){
 					// Check to see if the request is still happening
 					if ( xhr && !requestDone )
 						onreadystatechange( "timeout" );
