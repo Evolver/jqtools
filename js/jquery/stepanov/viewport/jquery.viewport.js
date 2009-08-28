@@ -4,6 +4,9 @@
   * URL: http://www.stepanov.lv
   */
 
+if( typeof jQuery.utilVersion =='undefined')
+  throw 'jQuery.util library is required';
+
 jQuery.extend({
   
   // library version
@@ -66,9 +69,16 @@ jQuery.fn.extend({
   
   // align element to viewport
   alignToViewport: function( options) {
+
+    if( options ===undefined)
+      options ={};
+      
     // alignment gap in pixels
     if( options.gap ===undefined)
       options.gap =0;
+    // hide elements after alignment?
+    if( options.hide ===undefined)
+      options.hide =false;
       
     // first of all, hide all elements, because if elements are shown at this point,
     //  and if there is need to reposition them, after repositioning there may be gaps
@@ -124,6 +134,9 @@ jQuery.fn.extend({
           .data( 'viewportVertAlign', 'bottom');
       }
     });
+    
+    if( options.hide)
+      this.hide();
     
     return this;
   }

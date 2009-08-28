@@ -16,6 +16,9 @@ if( typeof jQuery.viewportVersion =='undefined')
 // define constants
 jQuery.extend({
   
+  // library version
+  menuVersion: 1.0,
+  
   // menu types
   MENU_FROM_CALLBACK: 'callback',
   MENU_FROM_URL: 'url',
@@ -93,6 +96,8 @@ jQuery.fn.extend({
         
     } else if( options.type ==jQuery.MENU_FROM_URL) {
       // see if url is defined
+      if( options.async ===undefined)
+        options.async =true;
       if( options.url ===undefined)
         throw 'No url defined. System will be unable to render menu.';
       if( options.varName ===undefined)
@@ -110,36 +115,36 @@ jQuery.fn.extend({
         
       // menu url open handler
       if( options.loadUrlSuccess ===undefined)
-        options.loadUrlSuccess =function( element, data) {};
+        options.loadUrlSuccess =function( menu, element, data) {};
         
       // menu url error handler
       if( options.loadUrlError ===undefined)
-        options.loadUrlError =function( element, data) {};
+        options.loadUrlError =function( menu, element, data) {};
         
       // menu url completion handler
       if( options.loadUrlComplete ===undefined)
-        options.loadUrlComplete =function( element, data) {};
+        options.loadUrlComplete =function( menu, element, data) {};
     }
       
     // menu select handler
     if( options.select ===undefined)
-      options.select =function( element, data) {};
+      options.select =function( menu, element, data) {};
       
     // menu open handler
     if( options.open ===undefined)
-      options.open =function( element, data) {};
+      options.open =function( menu, element, data) {};
       
     // menu close handler
     if( options.close ===undefined)
-      options.close =function( element, data) {};
+      options.close =function( menu, element, data) {};
       
     // callback to initialize menu item
     if( options.init ===undefined)
-      options.init =function( element, data) {};
+      throw 'No init callback has been specified, menu rendering will not be possible';
       
     // menu draw handler
     if( options.draw ===undefined)
-      options.draw =function( element, submenu, data){ return true; /* apply factory effects */};
+      options.draw =function( menu, element, submenu, data){ return true; /* apply factory effects */};
       
     // align absolute menu to viewport?
     if( options.alignToViewport ===undefined)
@@ -148,14 +153,6 @@ jQuery.fn.extend({
     // viewport alignment gap in pixels
     if( options.viewportGap ===undefined)
       options.viewportGap =20;
-      
-    // menu opening delay in ms
-    if( options.openDelay ===undefined)
-      options.openDelay =200;
-      
-    // menu closing delay in ms
-    if( options.closeDelay ===undefined)
-      options.closeDelay =1000;
       
     // do not reload menu's cache all the time
     if( options.cache ===undefined)
@@ -238,7 +235,7 @@ jQuery.fn.extend({
     var ret;
     
     if( jMenu._isMenuOrigin()) {
-      // root menu is always invisible
+      // root menu (origin) is always invisible
       ret =false;
       
     } else {
@@ -248,9 +245,9 @@ jQuery.fn.extend({
       // seek for item on all open levels of menu
       var stack =jOrigin.data( '__stack');
       
-      while( stack.length >0) {
+      for( var i =0; i < stack.length; ++i) {
         // get stack element
-        var elem =stack.pop();
+        var elem =stack[ i];
         
         // see if it has searched item
         var elemCount =
@@ -275,19 +272,15 @@ jQuery.fn.extend({
   },
   
   // get parent menu item
-  getParentMenuItem: function( parentOf) {
+  getParentMenuItem: function() {
     jQuery.debug( ':getParentMenuItem');
     
     this.assertSingle();
-    this.assertMenuOrigin();
+    this.assertMenuItem();
     
-    // get origin
-    var origin =this.get(0);
+    var parentOf =this.get(0);
     
     if( jQuery(parentOf.parentNode)._isMenuOrigin()) {
-      // parentOf - root item
-      if( parentOf.parentNode !=origin)
-        throw 'The object does not belong to current menu';
       // this is the root menu item
       return null;
       
@@ -298,16 +291,33 @@ jQuery.fn.extend({
   },
   
   // open specified menu item (or origin menu, if no menu item is specified)
-  openMenu: function( target) {
+  openMenu: function( options, __internal) {
     jQuery.debug( ':openMenu');
     
     this.assertSingle();
     this.assertMenuOrigin();
     
+    if( __internal ===undefined)
+      __internal =false;
+      
+    // get info
+    var origin =this.get( 0);
+    var jOrigin =this;
+    var stack =jOrigin.data( '__stack');
+    var menuOptions =jOrigin.data( '__options');
+
+    if( options ===undefined)
+      options ={};
+    if( options.target ===undefined)
+      options.target =null;// open menu origin
+    if( options.after ===undefined)
+      options.after =0;// open instantly by default
+      
     // item to pass to callbacks
     var item;
+    var target =options.target;// target element to open
     
-    if( target ===undefined || target ===null) {
+    if( target ===null) {
       target =this.get(0);// reset item to indicate that root node has to be opened
       item =null;
       
@@ -318,19 +328,38 @@ jQuery.fn.extend({
     
     // ensure target element is menu item
     jTarget.assertMenuItem();
-      
-    // get info
-    var origin =this.get( 0);
-    var jOrigin =this;
-    var stack =jOrigin.data( '__stack');
-    var options =jOrigin.data( '__options');
     
     // see if menu is already opened
     if( jOrigin.isMenuOpen( item))
       return;
+      
+    // see if menu item is visible
+    if( target !=origin && !jOrigin.isMenuVisible( target))
+      return;
 
     // cancel all pending operations for current menu
-    jOrigin._menuCancelAll();
+    if( !__internal)
+      jOrigin._menuCancelAll();
+      
+    // see if menu has to be opened after specified timeout
+    if( options.after >0) {
+      // open after specified amount of miliseconds elapses
+      
+      // create timer
+      jOrigin.data( '__timer', setTimeout( function(){
+        // remove timer
+        jOrigin.removeData( '__timer');
+        
+        // update options to indicate that menu has to be opened instantly
+        options.after =0;
+        
+        // open menu
+        jOrigin.openMenu( options, true /* internal call */);
+  
+      }, options.after));
+      
+      return;
+    }
     
     // see if any nodes are open
     if( stack.length ==0) {
@@ -338,37 +367,12 @@ jQuery.fn.extend({
       target =origin;
       
     } else {
-
-      // find on which level of stack target to be opened is located
-      var found =false;
-      var stackIndex;
-      
-      for( stackIndex =0; stackIndex < stack.length; ++stackIndex) {
-        // see if current stack level has the element
-        var elemCount =
-          jQuery( stack[stackIndex])
-            ._getSubmenuItems()
-            .filter(function(){
-              return this ==target;
-            })
-            .length;
-            
-        // if has
-        if( elemCount >0) {
-          // item found
-          found =true;
-          break;
-        }
-      }
-      
-      if( !found)
-        return;// item was not found, so do not open currently not visible items
-        
-      // see if there are any menus to close
-      if( stackIndex < (stack.length -1)) {
-        // close submenus
-        jOrigin.closeMenu( stack[ stackIndex] /* leave this menu opened */);
-      }
+      // close submenus
+      jOrigin.closeMenu({
+          'target': target /* this menu remains visible */
+        },
+        // internal call
+        true);
     }
     
     // obtain menu representation
@@ -379,9 +383,9 @@ jQuery.fn.extend({
       return;// this menu has no submenu
     
     // see if there is need to reload submenu
-    if( !options.cache || !jMenu._isSubmenuLoaded()) {
+    if( !menuOptions.cache || !jMenu._isSubmenuLoaded()) {
       // load submenu items and show it
-      switch( options.type) {
+      switch( menuOptions.type) {
         // load from callback
         case jQuery.MENU_FROM_CALLBACK:
           jMenu._showSubmenuFromCallback();
@@ -401,24 +405,57 @@ jQuery.fn.extend({
   },
   
   // close all menu items (or close till specified menu item is met (specified menu item remains visible))
-  closeMenu: function( target) {
+  closeMenu: function( options, __internal) {
     jQuery.debug( ':closeMenu');
     
     this.assertSingle();
     this.assertMenuOrigin();
     
-    // get data
+    if( __internal ===undefined)
+      __internal =false;
+      
     var origin =this.get( 0);
     var jOrigin =this;
+    var menuOptions =jOrigin.data( '__options');
+      
+    if( options ===undefined)
+      options ={};
+    if( options.target ===undefined)
+      options.target =null;// target node to close
+    if( options.after ===undefined)
+      options.after =0;// close instantly by default
+    
+    // get data
+    var target =options.target;
+    
+    // cancel all timed events for current menu (only if called internally)
+    if( !__internal)
+      jOrigin._menuCancelAll();
+      
+    // see if menu has to be opened after specified timeout
+    if( options.after >0) {
+      // open after specified amount of miliseconds elapses
+      
+      // create timer
+      jOrigin.data( '__timer', setTimeout( function(){
+        // remove timer
+        jOrigin.removeData( '__timer');
+        
+        // update options to indicate that menu has to be opened instantly
+        options.after =0;
+        
+        // open menu
+        jOrigin.closeMenu( options, true /* internal call */);
+  
+      }, options.after));
+      
+      return;
+    }
     
     // item to pass to callbacks
     var item;
     
-    if( target ===undefined) {
-      target =null;// reset item to indicate that root node has to be closed
-      item =null;
-      
-    } else if( target ==origin) {
+    if( target ===null || target ==origin) {
       item =null;
       
     } else {
@@ -428,25 +465,32 @@ jQuery.fn.extend({
     // ensure target element is menu item
     if( target !==null)
       jQuery(target).assertMenuItem();
-
-    // get options
-    var options =jOrigin.data( '__options');
+    
+    // get stack
+    var stack =jOrigin.data( '__stack');
     
     // search the stack for item from the end, and while not found,
     //  close all items on the way
     while( true) {
-      var stack =jOrigin.data( '__stack');
       if( stack.length ==0)
         break;// no more opened menu items available
         
       // grab last stack item
       var elem =stack[ stack.length -1];
-      
-      // see if met leftmost menu item
-      if( target !==null && elem ==target)
-        break;// interrupt process
-        
       var jElem =jQuery(elem);
+   
+      if( target !==null) {
+        // see if there are matching menu items on current level
+        var found =jElem
+          ._getSubmenuItems()
+          .filter(function(){
+            return this ==target;
+          })
+          .length >0;
+        
+        if( found)
+          break;
+      }
         
       // hide submenu
       jElem._hideSubmenu();
@@ -456,13 +500,22 @@ jQuery.fn.extend({
   },
   
   // select menu
-  selectMenu: function( target) {
+  selectMenu: function( target, __internal) {
     jQuery.debug( ':selectMenu');
     
     this.assertSingle();
     this.assertMenuOrigin();
     
+    if( __internal ===undefined)
+      __internal =false;
+    
+    var origin =this.get(0);
     var jOrigin =this;
+    
+    // cancel all pending actions
+    if( !__internal)
+      jOrigin._menuCancelAll();
+    
     var jTarget =jQuery( target);
     
     jTarget.assertMenuItem();
@@ -473,10 +526,10 @@ jQuery.fn.extend({
       throw 'Unable to select hidden menu item';
       
     // get options
-    var options =jOrigin.data( '__options');
+    var menuOptions =jOrigin.data( '__options');
       
     // trigger selection
-    options.select( item, jTarget.data( '__data'));
+    menuOptions.select( origin, target, jTarget.data( '__data'));
     
     return this;
   },
@@ -525,7 +578,8 @@ jQuery.fn.extend({
     
     // align item to viewport
     jSubmenu.alignToViewport({
-      gap: options.viewportGap
+      gap: options.viewportGap,
+      hide: false/* show all elements after alignment */
     });
     
     // see if was aligned horizontally
@@ -536,6 +590,9 @@ jQuery.fn.extend({
       // move menu to the left side of the screen
       jSubmenu.css( 'left', pos.left -jSubmenu.outerWidth( false));
     }
+    
+    // hide all ements
+    jSubmenu.hide();
     
     return this;
   },
@@ -624,40 +681,33 @@ jQuery.fn.extend({
     // show submenu
     var jSubmenu =jMenu._getSubmenu();
     
-    // show submenu to be able to correctly position it on the screen
-    jSubmenu.show();
+    // cancel all effects on submenu
+    jSubmenu.stop( true, true);
 
     // call menu positioning callback
-    var applyFactoryEffects =options.draw( menu ==origin ? null : menu, jSubmenu.get( 0), jMenu.data( '__data'));
+    options.draw( origin, menu ==origin ? null : menu, jSubmenu.get( 0), jMenu.data( '__data'));
       
     // see if menu is absolute, and if it is, see if it fits the user's viewport
     if( jOrigin.data( '__absolute') && options.alignToViewport)
       jMenu._menuAlignToViewport();
 
-    // see if factory effects need to be displayed
-    if( applyFactoryEffects) {
-    
-      // hide submenu
-      jSubmenu.hide();
-    
-      // apply factory effects
-    
-      if( options.effect ==jQuery.MENU_EFFECT_NONE) {
-        // instant update
-        jSubmenu.show();
-          
-      } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
-        // slide effect
-        jSubmenu.show( 'fast');
-          
-      } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
-        // slide effect
-        jSubmenu.slideDown( 'fast');
-          
-      } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
-        // slide effect
-        jSubmenu.fadeIn( 'fast');
-      }
+    // apply effect
+  
+    if( options.effect ==jQuery.MENU_EFFECT_NONE) {
+      // instant update
+      jSubmenu.show();
+        
+    } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
+      // slide effect
+      jSubmenu.show( 'fast');
+        
+    } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
+      // slide effect
+      jSubmenu.slideDown( 'fast');
+        
+    } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
+      // slide effect
+      jSubmenu.fadeIn( 'fast');
     }
     
     // update stack
@@ -666,11 +716,8 @@ jQuery.fn.extend({
     // push opened element to stack
     stack.push( menu);
     
-    // update stack
-    jOrigin.data( '__stack', stack);
-    
     // trigger open handler
-    options.open( menu, jMenu.data( '__data'));
+    options.open( origin, menu ==origin ? null : menu, jMenu.data( '__data'));
     
     return this;
   },
@@ -693,17 +740,20 @@ jQuery.fn.extend({
     var stack =jOrigin.data( '__stack');
     
     // po opened element to stack
-    if( stack.pop() !=menu)
+    if( stack[ stack.length -1] !=menu)
       throw 'Unable to close not opened menu';
-    
-    // update stack
-    jOrigin.data( '__stack', stack);
+      
+    // pop the stack
+    stack.pop();
     
     // call close callback
-    options.close( menu ==origin ? null : menu, jMenu.data( '__data'));
+    options.close( origin, menu ==origin ? null : menu, jMenu.data( '__data'));
     
     // get submenu
     var jSubmenu =jMenu._getSubmenu();
+    
+    // cancel all effects on submenu
+    jSubmenu.stop( true, true);
     
     if( options.effect ==jQuery.MENU_EFFECT_NONE) {
       // instant update
@@ -785,11 +835,19 @@ jQuery.fn.extend({
     
     this.assertSingle();
     this.assertMenuItem();
-
-    // return hidden flag
-    var ret =this._getSubmenu().is(":visible");
     
-    return ret;
+    var menu =this.get(0);
+    var jMenu =this;
+    var origin =jMenu._getMenuOrigin();
+    var jOrigin =jQuery(origin);
+    
+    var stack =jOrigin.data( '__stack');
+    
+    for( var i =0; i < stack.length; ++i)
+      if( stack[i] ==menu)
+        return true;
+        
+    return false;
   },
   
   // see if submenu is loaded
@@ -858,29 +916,8 @@ jQuery.fn.extend({
         jMenu.data( '__data', menuData);
         
         // initialize it
-        options.init( menu, menuData);
-        
-        // bind events for menu items
-        jMenu
-          // listen to click event on current item
-          .mouseenter( function( e){
-            // trigger item selection
+        options.init( origin, menu, menuData);
 
-            // trigger menu selection
-            //origin.selectMenu( elem);
-            
-            jOrigin.openMenu( this);
-
-            // stop event propagation
-            //e.stopPropagation();
-          });/*
-          // leave menu
-          .mouseleave( function( e){
-            // close menu
-            jOrigin.closeMenu( this);
-            
-          });*/
-        
       });
       
     jMenu
@@ -924,7 +961,7 @@ jQuery.fn.extend({
     
     jMenu
       // assign submenu items
-      ._setSubmenuItems( options.callback( menu ==origin ? null : menu))
+      ._setSubmenuItems( options.callback( origin, menu ==origin ? null : menu, jMenu.data( '__data')))
       // show submenu
       ._showSubmenu();
     
@@ -952,12 +989,12 @@ jQuery.fn.extend({
     var menuData =jMenu.data( '__data');
     
     // execute preloading handler
-    var requestData =options.beforeLoadUrl( item, menuData);
+    var requestData =options.beforeLoadUrl( origin, item, menuData);
     
     // assign xml http request to current element
     jOrigin.data( '__xhr', jQuery.ajax({
       // asynchronous request
-      async: true,
+      async: options.async,
       // do not cache results
       cache: false,
       // pass request data
@@ -977,7 +1014,7 @@ jQuery.fn.extend({
       success: function( data) {
         
         // open url success
-        options.loadUrlSuccess( item, menuData);
+        options.loadUrlSuccess( origin, item, menuData);
         
         // assign submenu
         jMenu._setSubmenuItems( data);
@@ -993,7 +1030,7 @@ jQuery.fn.extend({
       // handle error
       error: function( XMLHttpRequest, textStatus, errorThrown) {
         // trigger error
-        options.loadUrlError( menu, menuData);
+        options.loadUrlError( origin, menu, menuData);
         
         jQuery.debug( 'error - ' +textStatus);
       },
@@ -1004,7 +1041,7 @@ jQuery.fn.extend({
         jOrigin.removeData( '__xhr');
         
         // call completion routine
-        options.loadUrlComplete( menu, menuData);
+        options.loadUrlComplete( origin, menu, menuData);
       }
     }));
     
