@@ -1,0 +1,114 @@
+
+Theory:
+
+  jQuery.selectbox manages native browser select box customization through DOM manipulation.
+  
+  jQuery.selectbox(), when called on a SELECT element (further in text - original sbox), hides it,
+  and appends right after that element a TABLE (further - custom sbox). Note, that original sbox
+  is not being removed from DOM, it is being hidden. All events from custom sbox are being routed
+  to original sbox, so, if you have any event handlers, like onclick, or onmouseover, on an original
+  sbox, they will be triggered if user clicks a custom sbox or mouse overs it. Furthermore, when
+  script is rendering menu/dialog/dropdown/overlay or whatever you decide to show your users as a
+  tool of option selection, options are being taken directly from original sbox element.
+
+  custom sbox markup, that is appended right after original sbox, is the following:
+  
+  <table class="<SELECT object's class name>">
+  <tr class="top">
+    <td class="left"></td>
+    <td class="mid"></td>
+    <td class="right"></td>
+  </tr>
+  <tr class="mid">
+    <td class="left"></td>
+    <td class="canvas">
+      <div class="value"></div>  <-- this is the container of selected option's label/labels.
+      <div class="menu"></div>   <-- this is dropdown/overlay/popup/whatever container. This container
+                                      is used to display option selection dialog/whatever.
+    </td>
+    <td class="right"></td>
+  </tr>
+  <tr class="bot">
+    <td class="left"></td>
+    <td class="mid"></td>
+    <td class="right"></td>
+  </tr>
+  </table>
+  
+  table > tbody > tr.top, table > tbody > tr.mid and table > tbody > tr.bot are necessary to
+  wrap the div.value in td.canvas from all sides to be able to give almost any look to the element.
+  
+  All the action is happening in tr.mid > div.canvas:
+    div.value - current selected value or select value list container
+    div.menu - object, that is shown when user clicks custom sbox
+  
+  To customize look of your custom sbox, for example, for this markup:
+  
+  <body>
+    <select id="mySbox" class="customSelectbox">
+      <option value="1" label="Opt #1: htmlspecialchars escaped html code to show">Opt #1: Text to show if no data in label</option>
+    </select>
+  </body>
+  
+  use, the following CSS get it done:
+  
+  /* customize overall custom select box element */
+  body > table.customSelectbox {
+  }
+  /* customize wrapping parts of div.value */
+  body > table.customSelectbox > tbody > ... {
+  }
+  /* customize 'value' zone */
+  body > table.customSelectbox > tbody > tr.mid > td.canvas > div.value {
+  }
+  /* customize menu look */
+  body > table.customSelectbox > tbody > tr.mid > td.canvas > div.menu {
+  }
+  
+  For example, if you want to have an IE-like dropdown option selections, you have to assign
+  position: relative to tr.mid > td.canvas, and assign position: absolute to div.menu so that
+  menu when appears is positioned absolutely relative to td.canvas.
+  
+  jQuery.selectbox( Object options) accepts an object as optional parameter (further - options).
+  
+  available keys of options are the following:
+  
+    effect (optional) - what effect to use to show/hide div.menu object. Available values:
+              jQuery.SELECTBOX_EFFECT_NONE - instant show/hide
+              jQuery.SELECTBOX_EFFECT_FADE - fading effect
+              jQuery.SELECTBOX_EFFECT_SLIDE_DOWN - slide down
+              jQuery.SELECTBOX_EFFECT_SLIDE_OUT - slide out
+              
+    presentation (obligate) - object, containing the following keys:
+      open - callback to call to show div.menu object
+      close - callback to call to hide div.menu object
+      
+      Using presentation object you can pass any callbacks you want to render div.menu as
+      you like. This callback system makes it possible to easy plug in to the core selectbox
+      script plugins for custom div.menu object displaying.
+      
+    makeValue (optional) - callback to call for building of contents of div.value when an
+                            option is selected or options are being checked. Using this callback
+                            you can build any output to show in div.value zone basing on selected
+                            options. This callback is called in context of original sbox, so
+                            you can access options by this.options, and selected index (if select
+                            box is not multiple) by this.selectedIndex. The callback should return
+                            HTML code or text to insert into div.value object.
+
+    jQuery.selectbox() should not be used directly to instantiate custom select box, jQuery.selectbox()
+    is meant to be called by plugins that render custom div.menu layout. To use custom select box, find
+    appropriate plugin, and call it's constructor, for example, if you have a native IE custom select box
+    plugin under name nativeIeSelectbox, call jQuery(elements).nativeIeSelectbox({...});
+                            
+markup:
+
+  No special markup. Script wraps native SELECT box elements.
+
+usage:
+
+  $( 'select#selectbox').customSelectbox({
+  
+    // use fading effect
+    effect: jQuery.SELECTBOX_EFFECT_FADE
+    
+  });
