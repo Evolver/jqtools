@@ -99,6 +99,14 @@ Theory:
     is meant to be called by plugins that render custom div.menu layout. To use custom select box, find
     appropriate plugin, and call it's constructor, for example, if you have a native IE custom select box
     plugin under name nativeIeSelectbox, call jQuery(elements).nativeIeSelectbox({...});
+    
+    When a select box is opened, a 'opened' class is added to the TBODY element of custom sbox.
+    What is the format of option storing in div.menu and how to track their "checkedness" is
+    up to you.
+    
+    The following methods can be used to trigger necessary actions on custom sbox:
+    
+    jQuery.toggleSelectboxOption( /* DOMElement */ optionElement);
                             
 markup:
 
