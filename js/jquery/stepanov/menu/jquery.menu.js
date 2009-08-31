@@ -183,6 +183,12 @@ jQuery.fn.extend({
         
       // call init callback for menu
       options.init( null, null);
+      
+      // close menu on document click
+      jQuery(document).click(function(e){
+        if( jMenu.isMenuOpen())
+          jMenu.closeMenu();
+      });
     });
     
     return this;

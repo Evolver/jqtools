@@ -4,6 +4,9 @@
   * URL: http://www.stepanov.lv
   */
 
+if( typeof jQuery =='undefined')
+  throw 'jQuery library is required';
+  
 jQuery.extend({
   
   // library version
@@ -19,7 +22,20 @@ jQuery.extend({
   
   // debug output stub
   debug: function( msg) {
-    
+  },
+  
+  // transfer events from object to object
+  transferEvents: function( /* array */ whichEvents, /* DOMElement */ source, /* DOMElement */ target) {
+      
+    for( var i =0; i < whichEvents.length; ++i) {
+      var evt =whichEvents[i];
+      
+      jQuery(source).bind( evt, function( e){
+        jQuery(target).trigger( jQuery.Event( e.type));
+        
+        e.stopPropagation();
+      });
+    }
   }
   
 });

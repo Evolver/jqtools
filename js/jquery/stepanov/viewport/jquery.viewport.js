@@ -69,6 +69,7 @@ jQuery.fn.extend({
   
   // align element to viewport
   alignToViewport: function( options) {
+    this.assertSingle();
 
     if( options ===undefined)
       options ={};
@@ -80,60 +81,71 @@ jQuery.fn.extend({
     if( options.hide ===undefined)
       options.hide =false;
       
-    // first of all, hide all elements, because if elements are shown at this point,
-    //  and if there is need to reposition them, after repositioning there may be gaps
-    //  left because of the disappeared scrollbars
-    this.hide();
+    // see if element is hidden
+    if( !this.is( ':hidden')) {
+      // hide element, because if element is shown at this point,
+      //  and if there is need to reposition them, after repositioning
+      //  there may be gaps left because of the disappeared window's scrollbars
+      this.hide();
+    }
       
     // get document viewport
     var viewport =jQuery(document).viewport();
     
-    // show elements
+    // show element
     this.show();
     
-    // iterate each element
-    this.each( function(){
-      var jThis =jQuery(this);
-      
-      jThis
-        .data( 'viewportHorizAlign', null)
-        .data( 'viewportVertAlign', null);
-      
-      // get dimensions
-      var offs =jThis.offset();
-      var pos =jThis.position();
-      var width =jThis.outerWidth( true);
-      var height =jThis.outerHeight( true);
-      
-      viewport.visibleLeft +=options.gap;
-      viewport.visibleRight -=options.gap;
-      viewport.visibleTop +=options.gap;
-      viewport.visibleBottom -=options.gap;
-      
-      // reposition by x
-      if( viewport.visibleLeft >offs.left) {
-        jThis
-          .css( 'left', pos.left +( viewport.visibleLeft -offs.left))
-          .data( 'viewportHorizAlign', 'left');
+    this
+      .data( 'viewportHorizAlign', null)
+      .data( 'viewportVertAlign', null);
+    
+    // get dimensions
+    var offs =this.offset();
+    var pos =this.position();
+    var width =this.outerWidth( true);
+    var height =this.outerHeight( true);
+    
+    viewport.visibleLeft +=options.gap;
+    viewport.visibleRight -=options.gap;
+    viewport.visibleTop +=options.gap;
+    viewport.visibleBottom -=options.gap;
+
+    // reposition by x
+    if( viewport.visibleRight <(offs.left +width)) {
+      this
+        .css( 'left', pos.left -( offs.left +width -viewport.visibleRight) +'px')
+        .data( 'viewportHorizAlign', 'right');
         
-      } else if( viewport.visibleRight <(offs.left +width)) {
-        jThis
-          .css( 'left', pos.left -( offs.left +width -viewport.visibleRight))
-          .data( 'viewportHorizAlign', 'right');
-      }
-      
-      // reposition by y
-      if( viewport.visibleTop >offs.top) {
-        jThis
-          .css( 'top', pos.top +( viewport.visibleTop -offs.top))
-          .data( 'viewportVertAlign', 'top');
+    } else if( viewport.visibleLeft >offs.left) {
+      this
+        .css( 'left', pos.left +( viewport.visibleLeft -offs.left) +'px')
+        .data( 'viewportHorizAlign', 'left');
+    }
+    
+    // reposition by y
+    if( viewport.visibleBottom <(offs.top +height)) {
+      this
+        .css( 'top', pos.top -( offs.top +height -viewport.visibleBottom) +'px')
+        .data( 'viewportVertAlign', 'bottom');
         
-      } else if( viewport.visibleBottom <(offs.top +height)) {
-        jThis
-          .css( 'top', pos.top -( offs.top +height -viewport.visibleBottom))
-          .data( 'viewportVertAlign', 'bottom');
-      }
-    });
+    } else if( viewport.visibleTop >offs.top) {
+      this
+        .css( 'top', pos.top +( viewport.visibleTop -offs.top) +'px')
+        .data( 'viewportVertAlign', 'top');
+    }
+    
+    // see if object fits the viewport, and if it doesn't,
+    //  align object to the left top corner of the viewport
+    if( viewport.viewportWidth < width) {
+      this
+        .css( 'left', pos.left -( offs.left -viewport.visibleLeft) +'px')
+        .data( 'viewportHorizAlign', 'left');
+    }
+    if( viewport.viewportHeight < height) {
+      this
+        .css( 'top', pos.top -( offs.top -viewport.visibleTop) +'px')
+        .data( 'viewportVertAlign', 'top');
+    }
     
     if( options.hide)
       this.hide();

@@ -1,0 +1,47 @@
+/**
+  * Author: Dmitry Stepanov
+  * E-Mail: dmitrij@stepanov.lv
+  * URL: http://www.stepanov.lv
+  */
+
+body, html {
+  height: 100%;
+}
+
+body {
+  background-color: white;
+}
+
+* {
+  margin: 0px;
+  padding: 0px;
+}
+
+table {
+  border-collapse: collapse;
+  empty-cells: show;
+}
+
+img {
+  border: none;
+  vertical-align: top;
+}
+
+div {
+  display: block;
+}
+
+div, table, td, p,
+input, textarea {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+div {
+  line-height: 1em;
+}
+
+label {
+  cursor: pointer;
+}
