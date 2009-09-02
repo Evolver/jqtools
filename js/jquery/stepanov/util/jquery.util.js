@@ -20,10 +20,6 @@ jQuery.extend({
     return 'jqUnidentified_' +(++jQuery._uniqueId);
   },
   
-  // debug output stub
-  debug: function( msg) {
-  },
-  
   // transfer events from object to object
   transferEvents: function( /* array */ whichEvents, /* DOMElement */ source, /* DOMElement */ target) {
       
@@ -36,8 +32,8 @@ jQuery.extend({
         e.stopPropagation();
       });
     }
-  }
-  
+  },
+
 });
 
 jQuery.fn.extend({
@@ -64,6 +60,32 @@ jQuery.fn.extend({
       throw 'Single object must be selected. Currently - none.';
     if( this.length >1)
       throw 'Single object must be selected. Currently - ' +this.length +'.';
-  }
+  },
+  
+  // bubble event to parent elements
+  bubbleEvent: function( e) {
+    // trigger event on all parent elements
+    this.each(function(){
+      if( !this.parentNode)
+        return;
+       
+      // instantiate new event
+      var event =jQuery.Event( e.type);
+      event.target =e.target;
+      event.data =e.data;
+      event.relatedTarget =e.relatedTarget;
+      event.currentTarget =e.currentTarget;
+      event.pageX =e.pageX;
+      event.pageY =e.pageY;
+      event.result =e.result;
+      event.timeStamp =e.timeStamp;
+        
+      // trigger event
+      jQuery(this.parentNode).trigger( event);
+    });
+    
+    // stop event propagation
+    e.stopPropagation();
+  },
   
 });

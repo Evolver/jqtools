@@ -158,8 +158,6 @@ jQuery.fn.extend({
     if( options.cache ===undefined)
       options.cache =false;
       
-    jQuery.debug( ':menu( options) [' +this.length +']');
-
     // iterate each matched element
     this.each( function(){
       var menu =this;
@@ -186,8 +184,7 @@ jQuery.fn.extend({
       
       // close menu on document click
       jQuery(document).click(function(e){
-        if( jMenu.isMenuOpen())
-          jMenu.closeMenu();
+        jMenu.closeMenu();
       });
     });
     
@@ -196,8 +193,6 @@ jQuery.fn.extend({
   
   // see if menu is opened
   isMenuOpen: function( target) {
-    jQuery.debug( ':isMenuOpen');
-    
     this.assertSingle();
     this.assertMenuOrigin();
     
@@ -227,8 +222,6 @@ jQuery.fn.extend({
   
   // see if menu is visible
   isMenuVisible: function( item) {
-    jQuery.debug( ':isMenuVisible');
-    
     this.assertSingle();
     this.assertMenuOrigin();
       
@@ -279,8 +272,6 @@ jQuery.fn.extend({
   
   // get parent menu item
   getParentMenuItem: function() {
-    jQuery.debug( ':getParentMenuItem');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -298,8 +289,6 @@ jQuery.fn.extend({
   
   // open specified menu item (or origin menu, if no menu item is specified)
   openMenu: function( options, __internal) {
-    jQuery.debug( ':openMenu');
-    
     this.assertSingle();
     this.assertMenuOrigin();
     
@@ -334,10 +323,6 @@ jQuery.fn.extend({
     
     // ensure target element is menu item
     jTarget.assertMenuItem();
-    
-    // see if menu is already opened
-    if( jOrigin.isMenuOpen( item))
-      return;
       
     // see if menu item is visible
     if( target !=origin && !jOrigin.isMenuVisible( target))
@@ -412,8 +397,6 @@ jQuery.fn.extend({
   
   // close all menu items (or close till specified menu item is met (specified menu item remains visible))
   closeMenu: function( options, __internal) {
-    jQuery.debug( ':closeMenu');
-    
     this.assertSingle();
     this.assertMenuOrigin();
     
@@ -507,8 +490,6 @@ jQuery.fn.extend({
   
   // select menu
   selectMenu: function( target, __internal) {
-    jQuery.debug( ':selectMenu');
-    
     this.assertSingle();
     this.assertMenuOrigin();
     
@@ -542,8 +523,6 @@ jQuery.fn.extend({
   
   // see if menu item has submenu object
   _hasSubmenu: function() {
-    jQuery.debug( ':_hasSubmenu');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -570,8 +549,6 @@ jQuery.fn.extend({
   
   // align menu to user viewport
   _menuAlignToViewport: function() {
-    jQuery.debug( ':_menuAlignToViewport');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -619,8 +596,6 @@ jQuery.fn.extend({
   
   // get submenu object
   _hasSubmenuObject: function( ) {
-    jQuery.debug( ':_hasSubmenuObject');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -637,8 +612,6 @@ jQuery.fn.extend({
   
   // see if object is menu origin
   _isMenuOrigin: function() {
-    jQuery.debug( ':_isMenuOrigin');
-    
     this.assertSingle();
 
     var ret =(this.data( '__menuOrigin') !==undefined);
@@ -648,8 +621,6 @@ jQuery.fn.extend({
   
   // get menu submenu
   _getSubmenu: function() {
-    jQuery.debug( ':_getSubmenu');
-    
     this.assertSingle();
     this.assertMenuItem();
 
@@ -662,8 +633,6 @@ jQuery.fn.extend({
   
   // get menu items
   _getSubmenuItems: function() {
-    jQuery.debug( ':_getSubmenuItems');
-    
     this.assertSingle();
     this.assertMenuItem();
 
@@ -672,8 +641,6 @@ jQuery.fn.extend({
   
   // show submenu
   _showSubmenu: function() {
-    jQuery.debug( ':_showSubmenu');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -730,8 +697,6 @@ jQuery.fn.extend({
   
   // hide submenu
   _hideSubmenu: function() {
-    jQuery.debug( ':_hideSubmenu');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -783,8 +748,6 @@ jQuery.fn.extend({
   
   // cancel all pending events for this menu
   _menuCancelAll: function() {
-    jQuery.debug( ':_menuCancelAll');
-    
     this.assertSingle();
     this.assertMenuOrigin();
       
@@ -812,8 +775,6 @@ jQuery.fn.extend({
   
   // get menu item origin
   _getMenuOrigin: function() {
-    jQuery.debug( ':_getMenuOrigin');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -837,8 +798,6 @@ jQuery.fn.extend({
   
   // see if menu is open
   _isSubmenuOpened: function() {
-    jQuery.debug( ':_isSubmenuOpened');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -858,8 +817,6 @@ jQuery.fn.extend({
   
   // see if submenu is loaded
   _isSubmenuLoaded: function() {
-    jQuery.debug( ':_isSubmenuLoaded');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -870,8 +827,6 @@ jQuery.fn.extend({
   
   // mark submenu as loaded
   _submenuLoaded: function() {
-    jQuery.debug( ':_submenuLoaded');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -882,8 +837,6 @@ jQuery.fn.extend({
   
   // set submenu items
   _setSubmenuItems: function( nodes) {
-    jQuery.debug( ':_setSubmenuItems');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -935,8 +888,6 @@ jQuery.fn.extend({
   
   // show submenu that is loaded and hidden
   _showSubmenuLoaded: function() {
-    jQuery.debug( ':_showSubmenuLoaded');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -953,8 +904,6 @@ jQuery.fn.extend({
   
   // show submenu from callback
   _showSubmenuFromCallback: function() {
-    jQuery.debug( ':_showSubmenuFromCallback');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -976,8 +925,6 @@ jQuery.fn.extend({
   
   // show submenu from url
   _showSubmenuFromUrl: function() {
-    jQuery.debug( ':_showSubmenuFromUrl');
-    
     this.assertSingle();
     this.assertMenuItem();
     
@@ -1037,8 +984,6 @@ jQuery.fn.extend({
       error: function( XMLHttpRequest, textStatus, errorThrown) {
         // trigger error
         options.loadUrlError( origin, menu, menuData);
-        
-        jQuery.debug( 'error - ' +textStatus);
       },
       
       // handle complete

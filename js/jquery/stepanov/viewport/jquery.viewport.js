@@ -10,7 +10,12 @@ if( typeof jQuery.utilVersion =='undefined')
 jQuery.extend({
   
   // library version
-  viewportVersion: 1.0
+  viewportVersion: 1.0,
+  
+  // get centering offset
+  getCenteringOffset: function( dimensionMetric, objectMetric) {
+    return parseInt( (dimensionMetric -objectMetric) /2);
+  }
   
 });
 

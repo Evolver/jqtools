@@ -156,7 +156,6 @@ jQuery.fn.extend({
         var option =jThis.data( '__option');
         
         if( !option) {
-          jQuery.debug( 'Click on deleted option');
           jThis.remove();// remove current element
           return;// this option was removed
         }

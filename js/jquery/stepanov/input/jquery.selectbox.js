@@ -174,7 +174,6 @@ jQuery.fn.extend({
           
         // close select box when user clicks document
         jQuery(document).click(function(e){
-
           if( jCustomSbox.isSelectboxOpened())
             jCustomSbox.closeSelectbox();
         });

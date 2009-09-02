@@ -1,0 +1,13 @@
+
+- jQuery has bugs (or browsers have them?) with .width(), .height(), .innerWidth(), .innerHeight(), .outerWidth(),
+   .outerHeight() on elements, when they are hidden. If element is hidden, computed values for the methods specified
+   above are incorrect. To obtain correct values, element should be show()n first. So the process is the following:
+   
+     elem.show();
+     var width =elem.outerWidth(true);
+     elem.hide();// restore status of visibility
+     
+   Investigate those jQuery methods and see if those are browser-specific or jQuery's bugs.
+   There are lots of stubs in current code to avoid these bugs. Those stubs to be removed when bug is resolved.
+   
+- Documentation for overlays.
