@@ -1,0 +1,2 @@
+Javascript code compressor and obfuscator:
+	http://javascriptcompressor.com/

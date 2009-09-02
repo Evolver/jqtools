@@ -111,7 +111,7 @@ jQuery.fn.extend({
       // show fixed overlay on the screen
         
     } else
-      throw 'Invalid alignment type "' +align +'"';
+      throw 'Invalid alignment type "' +options.align +'"';
       
     // overlay positioning
     if( options.position ===undefined) {
