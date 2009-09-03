@@ -103,16 +103,15 @@ usage:
        *  Possible values:
        *      jQuery.OVERLAY_ALIGN_RELATIVE - align relative to current position
        *      jQuery.OVERLAY_ALIGN_ABSOLUTE - align absolutely, relative to the closest parent with CSS "position: relative";
-       *      jQuery.OVERLAY_ALIGN_VIEWPORT - align relative to current user's viewport
-       *      jQuery.OVERLAY_ALIGN_FIXED - align relative to browser's window. WebKit has bugs with nested elements with
-       *                                    CSS 'position: fixed', so you may want to use viewport alignment instead.
+       *      jQuery.OVERLAY_ALIGN_FIXED - align relative to browser's window.
        *
        */
       align: jQuery.OVERLAY_ALIGN_FIXED,
       
       /**
        * Positioning offsets. Only top and left are accepted. You may use jQuery.OVERLAY_POSITION_CENTER to specify
-       *  that the overlay should be positioned at the center.
+       *  that the overlay should be positioned at the center. jQuery.OVERLAY_POSITION_CENTER makes any sense only
+       *  for jQuery.OVERLAY_ALIGN_ABSOLUTE or jQuery.OVERLAY_ALIGN_FIXED.
        *
        * @param DOMElement overlay
        * @return boolean

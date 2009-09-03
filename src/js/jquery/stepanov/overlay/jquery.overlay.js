@@ -25,7 +25,6 @@ jQuery.extend({
   // overlay alignment types
   OVERLAY_ALIGN_RELATIVE: 'relative',
   OVERLAY_ALIGN_ABSOLUTE: 'absolute',
-  OVERLAY_ALIGN_VIEWPORT: 'viewport',
   OVERLAY_ALIGN_FIXED: 'fixed',
   
   // positioning
@@ -86,16 +85,13 @@ jQuery.fn.extend({
 
     // alignment type
     if( options.align ===undefined)
-      options.align =jQuery.OVERLAY_ALIGN_VIEWPORT;// align to viewport by default
+      options.align =jQuery.OVERLAY_ALIGN_FIXED;// align to viewport by default
       
     if( options.align ==jQuery.OVERLAY_ALIGN_RELATIVE) {
       // align relatively to specified element
         
     } else if( options.align ==jQuery.OVERLAY_ALIGN_ABSOLUTE) {
       // absolute alignment (absolute offsets)
-
-    } else if( options.align ==jQuery.OVERLAY_ALIGN_VIEWPORT) {
-      // align relative to current viewport
 
     } else if( options.align ==jQuery.OVERLAY_ALIGN_FIXED) {
       // show fixed overlay on the screen
@@ -122,7 +118,7 @@ jQuery.fn.extend({
       var jOverlay =jQuery(overlay);
       
       // see if alignment type matches current css settings
-      if( options.align ==jQuery.OVERLAY_ALIGN_RELATIVE || options.align ==jQuery.OVERLAY_ALIGN_ABSOLUTE || options.align ==jQuery.OVERLAY_ALIGN_VIEWPORT) {
+      if( options.align ==jQuery.OVERLAY_ALIGN_RELATIVE || options.align ==jQuery.OVERLAY_ALIGN_ABSOLUTE) {
         jOverlay.css( 'position', 'absolute');
 
       } else if( options.align ==jQuery.OVERLAY_ALIGN_FIXED) {
@@ -443,9 +439,9 @@ jQuery.fn.extend({
     
     if( options.align ==jQuery.OVERLAY_ALIGN_RELATIVE) {
       left =options.position.left;
-      top =options.position.center;
+      top =options.position.top;
       
-    } else if( options.align ==jQuery.OVERLAY_ALIGN_ABSOLUTE || options.align ==jQuery.OVERLAY_ALIGN_VIEWPORT || options.align ==jQuery.OVERLAY_ALIGN_FIXED) {
+    } else if( options.align ==jQuery.OVERLAY_ALIGN_ABSOLUTE || options.align ==jQuery.OVERLAY_ALIGN_FIXED) {
       
       var boundsWidth;
       var boundsHeight;
@@ -464,26 +460,18 @@ jQuery.fn.extend({
           boundsWidth =jRelContainer.outerWidth( true);
           boundsHeight =jRelContainer.outerHeight( true);
           
-          boundsOffsetLeft =offs.left;
-          boundsOffsetTop =offs.top;
-          
         } else {
           // relative container does not exist, assume document as relative container
           boundsWidth =jQuery(document).width();
           boundsHeight =jQuery(document).height();
         }
         
-      } else /* OVERLAY_ALIGN_VIEWPORT || OVERLAY_ALIGN_FIXED */ {
+      } else /* OVERLAY_ALIGN_FIXED */ {
         // get viewport bounds
         var viewport =jQuery(document).viewport();
         
         boundsWidth =viewport.viewportWidth;
         boundsHeight =viewport.viewportHeight;
-        
-        if( options.align ==jQuery.OVERLAY_ALIGN_VIEWPORT) {
-          boundsOffsetLeft =viewport.scrollLeft;
-          boundsOffsetTop =viewport.scrollTop;
-        }
       }
       
       // calculate positioning
@@ -524,12 +512,17 @@ jQuery.fn.extend({
     this.assertSingle();
     
     var parent =this.get(0);
-    
+
     while( parent.parentNode) {
-      if( jQuery(parent).css( 'position') =='relative')
-        return parent;
-        
       parent =parent.parentNode;
+      
+      try {
+        if( jQuery(parent).css( 'position') !='static')
+          return parent;
+          
+      } catch( e) {
+        return null;
+      }
     }
     
     // no relative element found
