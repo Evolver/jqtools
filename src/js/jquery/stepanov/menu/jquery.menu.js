@@ -75,6 +75,9 @@ jQuery.fn.extend({
       break;
     }
     
+    if( options.effectSpeed ===undefined)
+      options.effectSpeed ='fast';
+    
     if( options.type ===undefined)
       options.type =jQuery.MENU_FROM_CALLBACK;
       
@@ -192,7 +195,7 @@ jQuery.fn.extend({
   },
   
   // see if menu is opened
-  isMenuOpen: function( target) {
+  isMenuOpened: function( target) {
     this.assertSingle();
     this.assertMenuOrigin();
     
@@ -672,15 +675,15 @@ jQuery.fn.extend({
         
     } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
       // slide effect
-      jSubmenu.show( 'fast');
+      jSubmenu.show( options.effectSpeed);
         
     } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
       // slide effect
-      jSubmenu.slideDown( 'fast');
+      jSubmenu.slideDown( options.effectSpeed);
         
     } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
       // slide effect
-      jSubmenu.fadeIn( 'fast');
+      jSubmenu.fadeIn( options.effectSpeed);
     }
     
     // update stack
@@ -732,15 +735,15 @@ jQuery.fn.extend({
       
     } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_OUT) {
       // slide
-      jSubmenu.hide( 'fast');
+      jSubmenu.hide( options.effectSpeed);
       
     } else if( options.effect ==jQuery.MENU_EFFECT_SLIDE_DOWN) {
       // slide
-      jSubmenu.slideUp( 'fast');
+      jSubmenu.slideUp( options.effectSpeed);
       
     } else if( options.effect ==jQuery.MENU_EFFECT_FADE) {
       // slide
-      jSubmenu.fadeOut( 'fast');
+      jSubmenu.fadeOut( options.effectSpeed);
     }
     
     return this;
@@ -973,7 +976,7 @@ jQuery.fn.extend({
         jMenu._setSubmenuItems( data);
         
         // see if menu is already opened
-        if( jOrigin.isMenuOpen( menu))
+        if( jOrigin.isMenuOpened( menu))
           return;// no need to show submenu at this point
 
         // show submenu

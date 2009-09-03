@@ -108,9 +108,9 @@ Theory:
     
     jQuery.toggleSelectboxOption( /* DOMElement */ optionElement);
                             
-markup:
+minimal markup:
 
-  No special markup. Script wraps native SELECT box elements.
+  No minimal markup. Script wraps native SELECT box elements.
 
 usage:
 

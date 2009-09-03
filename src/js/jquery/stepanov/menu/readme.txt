@@ -68,13 +68,28 @@ Theory:
   $( '#menu').selectMenu( which);// where 'which' is the DOMElement of menu item (div.item element).
   
   // also available methods:
-  $( '#menu').isMenuOpen( which);
+  $( '#menu').isMenuOpened( which);
   $( '#menu').isMenuVisible( which);
   $( which).getParentMenuItem();// returns either null (origin reached), or DOMElement object (div.item element)
 
-markup:
+minimal markup:
 
   <div id="menu"></div>
+  
+API:
+  
+  var jMenu =$( '#menu');
+  
+  // init menu
+  jMenu.menu({...});
+  
+  // methods
+  void jMenu.openMenu( [optional] DOMElement item);
+  void jMenu.closeMenu( [optional] DOMElement item);
+  bool jMenu.isMenuOpened( [optional] DOMElement item);
+  bool jMenu.isMenuVisible( [optional] DOMElement item);
+  void jMenu.selectMenu( DOMElement item);
+  DOMelement/null jMenu.getParentMenuItem();
 
 usage:
 
@@ -96,10 +111,22 @@ usage:
       viewportGap: 20,
     
       /**
-       * What effect to use to show opening and closing of menu
+       * What effect to use to show opening and closing of menu.
+       *  Possible values:
+       *      jQuery.MENU_EFFECT_NONE
+       *      jQuery.MENU_EFFECT_SLIDE_OUT
+       *      jQuery.MENU_EFFECT_SLIDE_DOWN
+       *      jQuery.MENU_EFFECT_FADE
        *
        */
-      effect: 'slideDown',
+      effect: jQuery.MENU_EFFECT_SLIDE_DOWN,
+      
+      /**
+       * At what speed (value in miliseconds, string 'fast' or string 'slow') to display the effects.
+       *  Default is 'fast'.
+       *
+       */
+      effectSpeed: 'fast',
       
       /**
        * Cache loaded submenus or query new item list every time

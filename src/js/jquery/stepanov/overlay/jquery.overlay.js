@@ -16,14 +16,11 @@ if( typeof jQuery.viewportVersion =='undefined')
 jQuery.extend({
   
   // overlay appearance effects
+  OVERLAY_EFFECT_NONE: 'none',
   OVERLAY_EFFECT_SLIDE_DOWN: 'slideDown',
   OVERLAY_EFFECT_SLIDE_OUT: 'slideOut',
   OVERLAY_EFFECT_FADE: 'fade',
-  OVERLAY_EFFECT_NONE: 'none',
-  
-  // overlay content loading type
-  OVERLAY_FROM_CONTAINER: 'container',
-  OVERLAY_FROM_URL: 'url',
+  OVERLAY_EFFECT_FOCUS: 'focus',
   
   // overlay alignment types
   OVERLAY_ALIGN_RELATIVE: 'relative',
@@ -56,25 +53,20 @@ jQuery.fn.extend({
       case jQuery.OVERLAY_EFFECT_FADE:
       case jQuery.OVERLAY_EFFECT_SLIDE_DOWN:
       case jQuery.OVERLAY_EFFECT_SLIDE_OUT:
+      case jQuery.OVERLAY_EFFECT_FOCUS:
       break;
       default:
         throw 'Invalid effect "' +options.effect +'"';
       break;
     }
     
+    // effect speed
     if( options.effectSpeed ===undefined)
       options.effectSpeed ='fast';
-    
-    if( options.type ===undefined)
-      options.type =jQuery.OVERLAY_FROM_CONTAINER;
-    else switch( options.type) {
-      case jQuery.OVERLAY_FROM_CONTAINER:
-      case jQuery.OVERLAY_FROM_URL:
-      break;
-      default:
-        throw 'Invalid overlay type "' +options.type +'"';
-      break;
-    }
+      
+    // effect color
+    if( options.effectColor ===undefined)
+      options.effectColor ='black';
     
     // callback to call before displaying overlay
     if( options.beforeOpen ===undefined)
@@ -98,8 +90,6 @@ jQuery.fn.extend({
       
     if( options.align ==jQuery.OVERLAY_ALIGN_RELATIVE) {
       // align relatively to specified element
-      if( options.element ===undefined)
-        throw 'No element specified to which alignment should be done';
         
     } else if( options.align ==jQuery.OVERLAY_ALIGN_ABSOLUTE) {
       // absolute alignment (absolute offsets)
@@ -199,7 +189,7 @@ jQuery.fn.extend({
     var options =jOverlay.data( '__options');
     
     // stop any animations on current overlay
-    jOverlay.stop( true, true);
+    jOverlay._overlayCancelAll();
     
     if( jOverlay.isOverlayOpened())
       return true;// already opened
@@ -218,6 +208,26 @@ jQuery.fn.extend({
         
       // assign child overlay for parent
       jParent.data( '__childOverlay', overlay);
+      
+      // if fading effect is being used, track z-indexes
+      if( options.effect ==jQuery.OVERLAY_EFFECT_FOCUS) {
+        // increment my z-index
+        var zIndex =parseInt( jParent.data( '__zIndex'));
+        
+        // reserve for fade effect
+        zIndex +=2;
+        
+        // assign z-index
+        jOverlay
+          .css( 'zIndex', zIndex)
+          .data( '__zIndex', zIndex);
+      }
+      
+    } else {
+      if( options.effect ==jQuery.OVERLAY_EFFECT_FOCUS) {
+        // store z-index for root overlay
+        jOverlay.data( '__zIndex', jOverlay.css( 'zIndex'));
+      }
     }
     
     // position overlay on the screen
@@ -244,10 +254,43 @@ jQuery.fn.extend({
       break;
       // no or invalid effect
       case jQuery.OVERLAY_EFFECT_NONE:
+      case jQuery.OVERLAY_EFFECT_FOCUS:
       default:
         this.show();
         afterOpen();
       break;
+    }
+    
+    if( options.effect ==jQuery.OVERLAY_EFFECT_FOCUS) {
+      // focusing effect is used, create background fixed overlay, that will fade
+
+      // alloc new id
+      var bgId =jQuery.uniqueId();
+      
+      // get z-index of fading background for current overlay
+      var zIndex =parseInt( jOverlay.css( 'zIndex')) -1;
+      
+      // create element
+      var jPrepend =parent ? jQuery(parent) : jQuery( 'body');
+      
+      // prepend
+      jPrepend.prepend( '<div id="' +bgId +'" style="position:fixed;left:0px;top:0px;background-color:' +options.effectColor +';width:100%;height:100%;z-index:' +zIndex +';"></div>');
+      
+      // get element
+      var bg =document.getElementById( bgId);
+      var jBg =jQuery(bg);
+      
+      // fade to
+      jBg
+        .fadeTo( 0, 0)
+        .fadeTo( options.effectSpeed, 0.5)
+        .click(function(){
+          // close overlay when clicked
+          jOverlay.closeOverlay();
+        });
+      
+      // reference element
+      jOverlay.data( '__focusObject', bg);
     }
     
     // opened
@@ -263,8 +306,8 @@ jQuery.fn.extend({
     var jOverlay =this;
     var options =jOverlay.data( '__options');
     
-    // stop any animations on current overlay
-    jOverlay.stop( true, true);
+    // stop any pending actions for current overlay
+    jOverlay._overlayCancelAll();
     
     if( !jOverlay.isOverlayOpened())
       return true;// already closed
@@ -278,7 +321,7 @@ jQuery.fn.extend({
       if( !jQuery( jOverlay.getChildOverlay()).closeOverlay())
         return false;// failed to close one of the child overlays
     }
-      
+
     // see if got parent overlay, and if got, see if it is opened.
     // if parent overlay is closed, do not close current overlay,
     // because it is should not be visible.
@@ -310,10 +353,28 @@ jQuery.fn.extend({
         jOverlay.slideUp( options.effectSpeed, afterClose);
       break;
       case jQuery.OVERLAY_EFFECT_NONE:
+      case jQuery.OVERLAY_EFFECT_FOCUS:
       default:
         jOverlay.hide();
         afterClose();
       break;
+    }
+    
+    if( options.effect ==jQuery.OVERLAY_EFFECT_FOCUS) {
+      // focusing effect is in use, remove background object
+      var bg =jOverlay.data( '__focusObject');
+      var jBg =jQuery(bg);
+      
+      // stop all animations on it
+      jBg.stop( true, true);
+      
+      // fade out and remove
+      jBg.fadeOut( options.effectSpeed, function(){
+        // delete element
+        jBg.remove();
+      });
+      
+      jOverlay.removeData( '__focusObject');
     }
     
     // closed
@@ -344,7 +405,7 @@ jQuery.fn.extend({
     while( node.parentNode) {
       node =node.parentNode;
       
-      if( jQuery(node).isOverlay())
+      if( jQuery(node)._isOverlay())
         return node;
     }
     
@@ -361,14 +422,7 @@ jQuery.fn.extend({
       
     return this.data( '__childOverlay');
   },
-  
-  // see if element is an overlay
-  isOverlay: function() {
-    this.assertSingle();
-    
-    return this.data( '__overlay') !==undefined;
-  },
-  
+
   // align overlay as configured
   alignOverlay: function() {
     this.assertSingle();
@@ -458,6 +512,13 @@ jQuery.fn.extend({
       jOverlay.hide();
   },
   
+  // see if element is an overlay
+  _isOverlay: function() {
+    this.assertSingle();
+    
+    return this.data( '__overlay') !==undefined;
+  },
+  
   // get relative container
   _getRelativeContainer: function() {
     this.assertSingle();
@@ -473,6 +534,17 @@ jQuery.fn.extend({
     
     // no relative element found
     return null;
+  },
+  
+  // cancel all pending operations on overlay
+  _overlayCancelAll: function() {
+    this.assertSingle();
+    this.assertOverlay();
+    
+    var jOverlay =this;
+    
+    // stop any animations on current overlay
+    jOverlay.stop( true, true);
   }
   
 });
