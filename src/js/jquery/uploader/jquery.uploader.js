@@ -13,6 +13,9 @@ if( typeof jQuery.utilVersion =='undefined')
   
 jQuery.extend({
   
+  // uploader library version
+  uploaderVersion: 1.0,
+  
   // supported formats for server responses
   UPLOADER_RESPONSE_RAW: 'raw',
   UPLOADER_RESPONSE_JSON: 'json',
@@ -55,7 +58,7 @@ jQuery.fn.extend({
       
     // server response format
     if( options.responseType ===undefined)
-      options.responseType =jQuery.UPLOADER_RESPONSE_RAW;
+      options.responseType =jQuery.UPLOADER_RESPONSE_JSON;
       
     // file types to be accepted for upload in format *.<extension>;*.<extension>;...
     if( options.fileTypes ===undefined)
@@ -114,8 +117,8 @@ jQuery.fn.extend({
         'file_size_limit': options.maxSize,
         
         'button_placeholder_id': containerId +'_placeholder',
-        'button_width': '1000px',// overflow will be hidden
-        'button_height': '1000px',// overflow will be hidden
+        'button_width': '10000px',// overflow is hidden
+        'button_height': '10000px',// overflow is hidden
         'button_window_mode': SWFUpload.WINDOW_MODE.TRANSPARENT,
         'button_cursor': SWFUpload.CURSOR.HAND,
         'button_action': options.multi ? SWFUpload.BUTTON_ACTION.SELECT_FILES : SWFUpload.BUTTON_ACTION.SELECT_FILE,
@@ -128,115 +131,122 @@ jQuery.fn.extend({
         // open dialog
         'file_dialog_start_handler': function(){
           var e =jQuery.Event( 'upload_open');
-          e.data ={
+
+          jUploader.triggerHandler( e, {
             'swfu': this
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         },
         
         // file added to queue
         'file_queued_handler': function( file){
           var e =jQuery.Event( 'upload_queue_add');
-          e.data ={
+
+          jUploader.triggerHandler( e, {
             'swfu': this,
             'file': file
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         },
         
         // file refused from queue
         'file_queue_error_handler': function( file, errno, error){
           var e =jQuery.Event( 'upload_queue_refuse');
-          e.data ={
+
+          jUploader.triggerHandler( e, {
             'swfu': this,
             'file': file,
             'errno': errno,
             'error': error
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         },
         
         // close dialog
         'file_dialog_complete_handler': function( numSelected, numQueued, queueSize){
           var e =jQuery.Event( 'upload_close');
-          e.data ={
+          
+          jUploader.triggerHandler( e, {
             'swfu': this,
             'selected': numSelected,
             'queued': numQueued,
             'queueSize': queueSize
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         },
         
         // file upload started
         'upload_start_handler': function( file){
           var e =jQuery.Event( 'upload_start');
-          e.data ={
+
+          jUploader.triggerHandler( e, {
             'swfu': this,
             'file': file
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         },
         
         // file upload in progress
         'upload_progress_handler': function( file, sent, size){
           var e =jQuery.Event( 'upload_progress');
-          e.data ={
+
+          jUploader.triggerHandler( e, {
             'swfu': this,
             'file': file,
             'sent': sent,
             'size': size
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         },
         
         // file upload has failed
         'upload_error_handler': function( file, errno, error){
           var e =jQuery.Event( 'upload_error');
-          e.data ={
+
+          jUploader.triggerHandler( e, {
             'swfu': this,
             'file': file,
             'errno': errno,
             'error': error
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         },
         
         // file upload has succeeded
         'upload_success_handler': function( file, serverData, responseWasReceived){
-          // TODO: deal with responseWasReceived. According to SWFUpload docs this has
-          //        something to do with excessive request timeouts.
-          var e =jQuery.Event( 'upload_success');
-          e.data ={
-            'swfu': this,
-            'file': file
-          };
-          
-          // convert server data if needed
-          if( options.responseType ==jQuery.UPLOADER_RESPONSE_RAW)
-            e.data.data =serverData;
-          else if( options.responseType ==jQuery.UPLOADER_RESPONSE_JSON)
-            e.data.data =eval( '(' +serverData +')');
-          
-          jUploader.triggerHandler( e);
+          // TODO: deal with responseWasReceived. 
+          if( !responseWasReceived) {
+            // server has timed out (According to SWFUpload docs this has something
+            //  to do with large responses). I choose to treat this situation as 'error'.
+            var e =jQuery.Event( 'upload_error');
+            
+            // trigger a 'timeout' error
+            jUploader.triggerHandler( e, {
+              'swfu': this,
+              'file': file,
+              'errno': SWFUpload.UPLOAD_ERROR.RESPONSE_TIMEOUT,
+              'error': 'Timeout'
+            });
+            
+          } else {
+            // response was received. This is the 'true' successful upload.
+            var e =jQuery.Event( 'upload_success');
+            var data ={
+              'swfu': this,
+              'file': file
+            };
+            
+            // convert server data if needed
+            if( options.responseType ==jQuery.UPLOADER_RESPONSE_RAW)
+              data.response =serverData;
+            else if( options.responseType ==jQuery.UPLOADER_RESPONSE_JSON)
+              data.response =eval( '(' +serverData +')');
+            
+            jUploader.triggerHandler( e, data);
+          }
         },
         
         // file upload has been completed
         'upload_complete_handler': function( file){
           var e =jQuery.Event( 'upload_complete');
-          e.data ={
+
+          jUploader.triggerHandler( e, {
             'swfu': this,
             'file': file
-          };
-          
-          jUploader.triggerHandler( e);
+          });
         }
 
       });

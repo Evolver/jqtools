@@ -16,7 +16,7 @@ $( '#my_upload_button')
 		'name': 'my_file',
 		'multi': true,
 		'requestData': {
-			'sessionId': ...
+			'sessionId': '01234567890123456789012345678901'
 		},
 		'responseType': jQuery.UPLOADER_RESPONSE_JSON,
 		'fileTypes': '*.jpg;*.gif',
@@ -25,49 +25,71 @@ $( '#my_upload_button')
 		'maxFileSize': 1048576 /* 1MB */
 	})
 	// handle events
-	.bind( 'upload_open', function( e){
-		// e.data.swfu - SWFUpload instance
+	.bind( 'upload_open', function( e, data){
+		// data.swfu - SWFUpload instance
+		debug( 'open upload dialog');
 	})
-	.bind( 'upload_queue_add', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.file - SWFUpload file object
+	.bind( 'upload_queue_add', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.file - SWFUpload file object
+		debug( 'add file to queue');
 	})
-	.bind( 'upload_queue_refuse', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.file - SWFUpload file object
-		// e.data.errno - error number
-		// e.data.error - error message
+	.bind( 'upload_queue_refuse', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.file - SWFUpload file object
+		// data.errno - error number
+		// data.error - error message
+		debug( 'file refused to be accepted to queue');
 	})
-	.bind( 'upload_close', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.selected - selected file count
-		// e.data.queued - queued file count
-		// e.data.queueSize - total files in queue
+	.bind( 'upload_close', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.selected - selected file count
+		// data.queued - queued file count
+		// data.queueSize - total files in queue
+		debug( 'close upload dialog');
+		
+		with( data) {
+		  var stats =swfu.getStats();
+		  if( stats.files_queued >0)
+		    swfu.startUpload();
+		}
 	})
-	.bind( 'upload_start', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.file - SWFUpload file object
+	.bind( 'upload_start', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.file - SWFUpload file object
+		debug( 'upload started');
 	})
-	.bind( 'upload_progress', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.file - SWFUpload file object
-		// e.data.sent - amount of bytes sent
-		// e.data.size - total file size in bytes
+	.bind( 'upload_progress', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.file - SWFUpload file object
+		// data.sent - amount of bytes sent
+		// data.size - total file size in bytes
+		debug( 'upload progress');
 	})
-	.bind( 'upload_error', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.file - SWFUpload file object
-		// e.data.errno - error number
-		// e.data.error - error message
+	.bind( 'upload_error', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.file - SWFUpload file object
+		// data.errno - error number
+		// data.error - error message
+		debug( 'upload failed');
 	})
-	.bind( 'upload_success', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.file - SWFUpload file object
-		// e.data.data - server response in specified format during instantiation
+	.bind( 'upload_success', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.file - SWFUpload file object
+		// data.response - server response in specified format during instantiation
+		debug( 'upload succeeded. response string - "' +data.response.responseString +'"');
 	})
-	.bind( 'upload_complete', function( e){
-		// e.data.swfu - SWFUpload instance
-		// e.data.file - SWFUpload file object
-	});
+	.bind( 'upload_complete', function( e, data){
+		// data.swfu - SWFUpload instance
+		// data.file - SWFUpload file object
+		debug( 'upload completed');
+		
+		with( data) {
+		  var stats =swfu.getStats();
+		  if( stats.files_queued >0)
+		    swfu.startUpload();
+		}
 
+	});
+      
 </script>

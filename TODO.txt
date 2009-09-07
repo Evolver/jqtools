@@ -10,4 +10,6 @@
    Investigate those jQuery methods and see if those are browser-specific or jQuery's bugs.
    There are lots of stubs in current code to avoid these bugs. Those stubs to be removed when bug is resolved.
    
-- Documentation for overlays.
+- Documentation for jQuery.uploader.
+
+- Implement graceful cleanup in menu, input, overlay using 'remove' event.

@@ -67,7 +67,10 @@ SWFUpload.UPLOAD_ERROR = {
 	SPECIFIED_FILE_ID_NOT_FOUND		: -260,
 	FILE_VALIDATION_FAILED	  		: -270,
 	FILE_CANCELLED			  		: -280,
-	UPLOAD_STOPPED					: -290
+	UPLOAD_STOPPED					: -290,
+	
+	// response processing has timed out
+	RESPONSE_TIMEOUT: -300
 };
 SWFUpload.FILE_STATUS = {
 	QUEUED		 : -1,
