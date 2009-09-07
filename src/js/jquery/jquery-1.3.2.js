@@ -1238,8 +1238,16 @@ jQuery.each({
 
 	remove: function( selector ) {
 		if ( !selector || jQuery.filter( selector, [ this ] ).length ) {
+		  // instantiate event object
+		  var e =jQuery.Event( 'remove');
+
 			// Prevent memory leaks
 			jQuery( "*", this ).add([this]).each(function(){
+			  // trigger an 'onremove' event on node and it's subnodes.
+			  //  Since 'onremove' event is not native DOM event, we use
+			  //  triggerHandler to trigger callbacks only.
+			  jQuery(this).triggerHandler( e);
+			  
 				jQuery.event.remove(this);
 				jQuery.removeData(this);
 			});

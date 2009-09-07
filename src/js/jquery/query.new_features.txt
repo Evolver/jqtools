@@ -1,0 +1,5 @@
+
+Added non-DOM-native event - remove. It is being triggered on each element, which is about to be
+ removed from DOM. To handle 'remove' event, bind a listener on a desired element with .bind() to
+ listen to event 'remove'. 'remove' event is triggered right before data associated to object is
+ removed, so data is available during event handling.
