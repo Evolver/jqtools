@@ -39,6 +39,11 @@ jQuery.extend({
   
 jQuery.fn.extend({
   
+  // ensure selected object is an uploader instance
+  assertUploader: function() {
+    return this.data( '__uploader') !==undefined;
+  },
+  
   // setup an upload overlay over specified elements
   uploader: function( options) {
     
@@ -93,16 +98,17 @@ jQuery.fn.extend({
       var uploader =this;
       var jUploader =jQuery(this);
       
+      // see what is display for target element
+      var disp =jUploader.css( 'display');
+
       // create container for flash element
       var containerId =jQuery.uniqueId();
-      var html ='<div id="' +containerId +'" style="position:relative;" class="__swfupload">' +
-                  '<div id="' +containerId +'_swfu" style="position:absolute;display:block;overflow:hidden;">' +
-                    '<div id="' +containerId +'_placeholder"></div>' +
-                  '</div>' +
+      var html ='<div id="' +containerId +'" style="display:block;position:absolute;left:0px;top:0px;overflow:hidden;">' +
+                  '<div id="' +containerId +'_placeholder"></div>' +
                 '</div>';
                 
       // insert element
-      jUploader.before( html);
+      jUploader.after( html);
       
       // instantiate SWFUpload object
       var swfu =new SWFUpload({
@@ -117,8 +123,6 @@ jQuery.fn.extend({
         'file_size_limit': options.maxSize,
         
         'button_placeholder_id': containerId +'_placeholder',
-        'button_width': '10000px',// overflow is hidden
-        'button_height': '10000px',// overflow is hidden
         'button_window_mode': SWFUpload.WINDOW_MODE.TRANSPARENT,
         'button_cursor': SWFUpload.CURSOR.HAND,
         'button_action': options.multi ? SWFUpload.BUTTON_ACTION.SELECT_FILES : SWFUpload.BUTTON_ACTION.SELECT_FILE,
@@ -252,39 +256,104 @@ jQuery.fn.extend({
       });
       
       // attach SWFUpload object to currently selected element
-      jUploader.data( '__swfu', swfu);
-      jUploader.data( '__swfuContainer', document.getElementById( containerId));
-      jUploader.data( '__alignInterval', setInterval( function(){
-        jQuery( '#' +containerId +'_swfu')
-          .css({
-            'width': jUploader.outerWidth(),
-            'height': jUploader.outerHeight()
-          });
-      }, options.alignFreq));
+      jUploader
+        // mark element as uploader instance
+        .data( '__uploader', true)
+        // store SWFUpload object reference
+        .data( '__swfu', swfu)
+        // store SWFUpload flash object container
+        .data( '__swfuContainer', document.getElementById( containerId))
+        // setup alignment interval
+        .data( '__alignInterval', setInterval( function(){
+          var jSwfu =jQuery( '#' +containerId);
+          var dim =jSwfu.data( '__dimensions');
+          
+          var offs =jUploader.offset();
+          var outerWidth =jUploader.outerWidth();
+          var outerHeight =jUploader.outerHeight();
+          
+          if( dim ===undefined ||
+              dim.left !=offs.left ||
+              dim.top !=offs.top ||
+              dim.width !=outerWidth ||
+              dim.height !=outerHeight) {
+            // get relative container
+            var relContainer =jUploader.getRelativeContainer();
+            if( relContainer !==null) {
+              // relative container is available
+              // get relative container offset
+              var jRelContainer =jQuery(relContainer);
+              var relOffs =jRelContainer.offset();
+              // calculate true position of element
+              var pos ={
+                'left': offs.left -relOffs.left,
+                'top': offs.top -relOffs.top
+              };
+            } else {
+              var pos =jUploader.position();
+            }
+              
+            // resize flash container and flash object
+            jSwfu
+              // resize OBJECT or any underlying element in flash container
+              .add( jSwfu.find( '> *').get(0)/* expecting an OBJECT element here */)
+              .css({
+                'width': outerWidth,
+                'height': outerHeight
+              })
+              
+            // position flash container
+            jSwfu
+              .css({
+                'left': pos.left,
+                'top': pos.top
+              })
+              .data( '__dimensions', {
+                'width': outerWidth,
+                'height': outerHeight,
+                'left': offs.left,
+                'top': offs.top
+              });
+              
+            // update flash
+            swfu.callFlash( 'SetButtonDimensions', [outerWidth, outerHeight]);
+          }
+          
+        }, options.alignFreq));
       
-      // listen to 'remove' event to gracefully cleanup
-      jUploader.bind( 'remove', function( e){
-        var jThis =jQuery(this);
-        
-        // cancel alignment timer
-        clearInterval( jThis.data( '__alignInterval'));
-        
-        // grafully destroy swfu data
-        jThis.data( '__swfu').destroy();
-        
-        // remove swfu container
-        jQuery( jThis.data( '__swfuContainer')).remove();
-        
-        // dereference SWFU object and remove data
-        jThis
-          .removeData( '__swfu')
-          .removeData( '__swfuContainer')
-          .removeData( '__alignInterval');
-      });
+      // listen to 'remove' event to gracefully cleanup when element is
+      //  removed from DOM
+      jUploader
+        .bind( 'remove', function( e){
+          var jThis =jQuery(this);
+          
+          // cancel alignment timer
+          clearInterval( jThis.data( '__alignInterval'));
+          
+          // grafully destroy swfu data
+          jThis.data( '__swfu').destroy();
+          
+          // remove swfu container
+          jQuery( jThis.data( '__swfuContainer')).remove();
+          
+          // dereference SWFU object and remove data
+          jThis
+            .removeData( '__swfu')
+            .removeData( '__swfuContainer')
+            .removeData( '__alignInterval');
+        });
       
     });
     
     return this;
+  },
+  
+  // get SWFUpload object instance
+  getSwfUpload: function() {
+    this.assertSingle();
+    this.assertUploader();
+    
+    return this.data( '__swfu');
   }
   
 });

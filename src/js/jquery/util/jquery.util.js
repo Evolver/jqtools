@@ -88,4 +88,26 @@ jQuery.fn.extend({
     e.stopPropagation();
   },
   
+  // get relative container
+  getRelativeContainer: function() {
+    this.assertSingle();
+    
+    var parent =this.get(0);
+
+    while( parent.parentNode) {
+      parent =parent.parentNode;
+      
+      try {
+        if( jQuery(parent).css( 'position') !='static')
+          return parent;
+          
+      } catch( e) {
+        return null;
+      }
+    }
+    
+    // no relative element found
+    return null;
+  },
+  
 });

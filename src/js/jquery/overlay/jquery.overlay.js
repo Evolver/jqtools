@@ -87,6 +87,10 @@ jQuery.fn.extend({
     if( options.align ===undefined)
       options.align =jQuery.OVERLAY_ALIGN_FIXED;// align to viewport by default
       
+    // focus effect opacity
+    if( options.focusOpacity ===undefined)
+      options.focusOpacity =0.3;
+      
     if( options.align ==jQuery.OVERLAY_ALIGN_RELATIVE) {
       // align relatively to specified element
         
@@ -150,27 +154,50 @@ jQuery.fn.extend({
           
           // prevent default
           e.preventDefault();
+        })
+        // bind remove event
+        .bind( 'remove', function( e){
+          // close overlay
+          jOverlay.closeOverlay();
+          
+          // cancel all pending actions
+          jOverlay._overlayCancelAll();
         });
 
-        // see if this overlay has any parent overlays, and if not, bind closing of current
-        //  overlay to document
-        if( jOverlay.getParentOverlay() ===null) {
-          jQuery(document).click(function( e) {
-            if( !jOverlay.isOverlayOpened())
-              return;// overlay is not opened
-              
-            // close overlay
-            jOverlay.closeOverlay();
+      // see if this overlay has any parent overlays, and if not, bind closing of current
+      //  overlay to document
+      if( jOverlay.getParentOverlay() ===null) {
+        var clickFn =function( e) {
+          if( !jOverlay.isOverlayOpened())
+            return;// overlay is not opened
+            
+          // close overlay
+          jOverlay.closeOverlay();
+        };
+        
+        // bind click function
+        jQuery(document).click( clickFn);
+        // unbind click event when element is removed from DOM
+        jOverlay
+          .bind( 'remove', function( e){
+            jQuery(document).unbind( 'click', clickFn);
           });
-        }
+      }
         
       // track position if requested
       if( options.align ==jQuery.OVERLAY_ALIGN_FIXED) {
-        // align overlay each time window resizes
-        jQuery(window).resize(function(){
+        var resizeFn =function(){
           // align overlay
           jOverlay.alignOverlay();
-        });
+        };
+        
+        // align overlay each time window resizes
+        jQuery(window).resize( resizeFn);
+        // unbind resize event when element is removed from DOM
+        jOverlay
+          .bind( 'remove', function( e){
+            jQuery(window).unbind( 'resize', resizeFn);
+          });
       }
     });
   },
@@ -227,7 +254,7 @@ jQuery.fn.extend({
     }
     
     // position overlay on the screen
-    jOverlay.alignOverlay();
+    jOverlay.alignOverlay( true);
 
     // callback to call after overlay has been displayed
     function afterOpen() {
@@ -279,7 +306,7 @@ jQuery.fn.extend({
       // fade to
       jBg
         .fadeTo( 0, 0)
-        .fadeTo( options.effectSpeed, 0.5)
+        .fadeTo( options.effectSpeed, options.focusOpacity)
         .click(function(){
           // close overlay when clicked
           jOverlay.closeOverlay();
@@ -420,9 +447,12 @@ jQuery.fn.extend({
   },
 
   // align overlay as configured
-  alignOverlay: function() {
+  alignOverlay: function( forceAlign) {
     this.assertSingle();
     this.assertOverlay();
+    
+    if( forceAlign ===undefined)
+      forceAlign =false;
     
     var jOverlay =this;
     var options =jOverlay.data( '__options');
@@ -431,10 +461,13 @@ jQuery.fn.extend({
     var top =0;
     var left =0;
     
-    // show overlay before positioning
+    // see if overlay is hidden
     var isHidden =jOverlay.is(':hidden');
     
-    if( isHidden)
+    // do not align hidden overlays
+    if( isHidden && !forceAlign)
+      return;
+    else if( isHidden)
       jOverlay.show();
     
     if( options.align ==jQuery.OVERLAY_ALIGN_RELATIVE) {
@@ -450,7 +483,7 @@ jQuery.fn.extend({
       
       if( options.align ==jQuery.OVERLAY_ALIGN_ABSOLUTE) {
         // get relative container
-        var relContainer =jOverlay._getRelativeContainer();
+        var relContainer =jOverlay.getRelativeContainer();
         
         if( relContainer) {
           // relative container exists
@@ -495,7 +528,6 @@ jQuery.fn.extend({
         'top': boundsOffsetTop +top
       });
       
-    // hide overlay
     if( isHidden)
       jOverlay.hide();
   },
@@ -505,28 +537,6 @@ jQuery.fn.extend({
     this.assertSingle();
     
     return this.data( '__overlay') !==undefined;
-  },
-  
-  // get relative container
-  _getRelativeContainer: function() {
-    this.assertSingle();
-    
-    var parent =this.get(0);
-
-    while( parent.parentNode) {
-      parent =parent.parentNode;
-      
-      try {
-        if( jQuery(parent).css( 'position') !='static')
-          return parent;
-          
-      } catch( e) {
-        return null;
-      }
-    }
-    
-    // no relative element found
-    return null;
   },
   
   // cancel all pending operations on overlay

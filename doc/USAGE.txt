@@ -1,0 +1,11 @@
+
+This library is designed to work with jQuery. All library's components are designed to work
+  with originally included software with no changes. Current library implements various
+  patches to original jQuery code. These patches extend jQuery, for example, to support
+  new jQuery-native event 'remove' for graceful cleanups.
+
+It is very important that if you manipulate DOM you do that using jQuery API, no native DOM
+  .innerHTML, appendChild, removeChild and like that, because jQuery manages new 'remove' event,
+  that is not native to DOM, and the most of cleanup of this library is based on that event.
+  If you ommit using jQuery's .remove() or .html() to manipulate DOM, various memory leaks may
+  (actually - will) take place.

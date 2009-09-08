@@ -54,6 +54,15 @@ jQuery.fn.extend({
     if( options.presentation.close ===undefined)
       throw 'No presentation.close() callback was specified';
       
+    // callback to call when custom select box is initialized
+    if( options.presentation.init ===undefined)
+      options.presentation.init =function(){};
+      
+    // callback to call when custom select box is about to be unloaded to
+    //  gracefully shutdown pending UI effects.
+    if( options.presentation.cleanup ===undefined)
+      options.presentation.cleanup =function(){};
+    
     if( options.makeValue ===undefined) {
       // internal value builder
       options.makeValue =function() {
@@ -172,11 +181,33 @@ jQuery.fn.extend({
           // show initial value of select box
           ._updateSelectboxValue();
           
-        // close select box when user clicks document
-        jQuery(document).click(function(e){
+        // document click handler
+        var clickFn =function(e){
           if( jCustomSbox.isSelectboxOpened())
             jCustomSbox.closeSelectbox();
-        });
+        };
+          
+        // close select box when user clicks document
+        jQuery(document).click( clickFn);
+        
+        // cleanup after custom select box is removed
+        jCustomSbox
+          .bind( 'remove', function( e){
+            // unbind click handler from document
+            jQuery(document).unbind( 'click', clickFn);
+            // deinitialize presentation layer
+            options.presentation.cleanup.call( customSbox);
+          });
+          
+        // cleanup after select box object is removed
+        jSbox
+          .bind( 'remove', function( e){
+            // remove custom select box
+            jCustomSbox.remove();
+          });
+          
+        // initialize presentation layer
+        options.presentation.init.call( customSbox);
       });
   },
   

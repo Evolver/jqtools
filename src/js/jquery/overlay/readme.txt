@@ -59,6 +59,13 @@ usage:
       effectColor: 'black',
       
       /**
+       * Opacity to use to shaden the background. This option makes sense only with
+       *  effect: jQuery.OVERLAY_EFFECT_FOCUS.
+       *
+       */
+      focusOpacity: 0.3,
+      
+      /**
        * Callback to call before opening overlay. Callback should return either true or false, indicating
        *  if overlay should be continued loading.
        *

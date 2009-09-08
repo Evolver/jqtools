@@ -185,10 +185,22 @@ jQuery.fn.extend({
       // call init callback for menu
       options.init( null, null);
       
-      // close menu on document click
-      jQuery(document).click(function(e){
+      // document click handler
+      var clickFn =function(e){
         jMenu.closeMenu();
-      });
+      };
+      
+      // close menu on document click
+      jQuery(document).click( clickFn);
+      
+      // cleanup when menu object is removed
+      jMenu
+        .bind( 'remove', function( e){
+          // remove click event handler
+          jQuery(document).unbind( 'click', clickFn);
+          // cancel all pending actions
+          jMenu._menuCancelAll();
+        });
     });
     
     return this;
