@@ -10,6 +10,13 @@
    Investigate those jQuery methods and see if those are browser-specific or jQuery's bugs.
    There are lots of stubs in current code to avoid these bugs. Those stubs to be removed when bug is resolved.
    
-- Documentation for jQuery.uploader.
+- Documentation for jQuery.textinput
 
-- Implement graceful cleanup in menu, input, overlay using 'remove' event.
+- Finish menu documentation.
+
+- Implement JSON validation in every place, where eval() takes place. This is needed to protect
+    from potential data injection from server side.
+    
+- Create custom inputs: button (for input types "button", "submit", "reset"), checkbox and radio.
+
+- Rewrite jQuery.ajax readystatechange code, it's a little bit messy.

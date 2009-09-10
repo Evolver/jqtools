@@ -139,11 +139,15 @@ jQuery.fn.extend({
         // bind click event
         .click( function( e){
           // stop propagation
-          e.stopPropagation();
+          //e.stopPropagation();
           
           // get parent overlay
           if( !jOverlay.isOverlayOpened())
             return;// overlay is not opened
+            
+          // see if parent element has been clicked
+          if( jQuery(e.target).isDescendantOf( overlay, true))
+            return;// expecting clicks to close overlay on parent elements only
           
           var childOverlay =jOverlay.getChildOverlay();
           if( !childOverlay)
@@ -168,6 +172,10 @@ jQuery.fn.extend({
       //  overlay to document
       if( jOverlay.getParentOverlay() ===null) {
         var clickFn =function( e) {
+          
+          if( jQuery(e.target).isDescendantOf( overlay, true))
+            return;// expecting clicks on parent elements only
+            
           if( !jOverlay.isOverlayOpened())
             return;// overlay is not opened
             
@@ -425,11 +433,16 @@ jQuery.fn.extend({
     
     var node =this.get(0);
     
-    while( node.parentNode) {
-      node =node.parentNode;
-      
-      if( jQuery(node)._isOverlay())
-        return node;
+    try {
+      while( node.parentNode) {
+        node =node.parentNode;
+        
+        if( jQuery(node)._isOverlay())
+          return node;
+      }
+    } catch( e){
+      // exception thrown, assume not found
+      return null;
     }
     
     // not found
@@ -530,6 +543,25 @@ jQuery.fn.extend({
       
     if( isHidden)
       jOverlay.hide();
+  },
+  
+  // close current overlay
+  closeCurrentOverlay: function() {
+    this.assertSingle();
+    
+    // find overlay element
+    if( this._isOverlay()) {
+      // close current element
+      this.closeOverlay();
+      
+    } else {
+      var overlay =this.getParentOverlay();
+      if( overlay ===null)
+        throw 'No current overlay has been found. This should not happen.';
+        
+      // close found overlay
+      jQuery(overlay).closeOverlay();
+    }
   },
   
   // see if element is an overlay

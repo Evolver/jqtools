@@ -236,8 +236,6 @@ usage:
             //  menu items also.
             e.stopPropagation();
           });
-
-        }
       },
 
       /**

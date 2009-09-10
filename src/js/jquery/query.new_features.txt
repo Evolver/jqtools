@@ -3,3 +3,7 @@ Added non-DOM-native event - remove. It is being triggered on each element, whic
  removed from DOM. To handle 'remove' event, bind a listener on a desired element with .bind() to
  listen to event 'remove'. 'remove' event is triggered right before data associated to object is
  removed, so data is available during event handling.
+ 
+ WARNING: the 'remove' event also exists in ui.core.js of http://ui.jquery.com, so currently
+  there is conflict, because on remove there are being two 'remove' events fired. To work around
+  this, you must disable 'remove' event patch in ui.core.js of jQuery UI.

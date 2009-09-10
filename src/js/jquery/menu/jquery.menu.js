@@ -105,8 +105,6 @@ jQuery.fn.extend({
         throw 'No url defined. System will be unable to render menu.';
       if( options.varName ===undefined)
         options.varName ='nodeId';
-      if( options.requestData ===undefined)
-        options.requestData ={};
       if( options.timeout ===undefined)
         options.timeout =5000;
         
@@ -338,14 +336,14 @@ jQuery.fn.extend({
     
     // ensure target element is menu item
     jTarget.assertMenuItem();
-      
-    // see if menu item is visible
-    if( target !=origin && !jOrigin.isMenuVisible( target))
-      return;
-
+    
     // cancel all pending operations for current menu
     if( !__internal)
       jOrigin._menuCancelAll();
+      
+    // see if menu item is visible, because if it is not, we shouldn't open it
+    if( target !=origin && !jOrigin.isMenuVisible( target))
+      return;
       
     // see if menu has to be opened after specified timeout
     if( options.after >0) {
