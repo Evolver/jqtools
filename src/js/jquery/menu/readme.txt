@@ -213,12 +213,15 @@ usage:
         // bind events for menu item
         jMenu
           // open menu's submenu when mouse overing it
-          .mouseenter( function( e){
+          .mouseover( function( e){
             // trigger submenu opening
             jOrigin.openMenu({
               'target': this,
-              'after': 200/* wait 200ms for user to hold mouse on concrete menu item */
+              'after': 300
             });
+            
+            // do not bubble
+            e.stopPropagation();
           })
           // handle click events to trigger item selection
           .click(function( e){

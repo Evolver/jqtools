@@ -141,7 +141,15 @@ jQuery.fn.extend({
           
           jCustomInputObject
             // show hint when blur
-            .bind( 'blur', showHint)
+            .bind( 'blur', function(e){
+              showHint();
+              
+              var e =jQuery.Event( 'blur');
+              e.preventDefault();
+              
+              // transfer event
+              jQuery.event.trigger( e, null, input);
+            })
             // hide hint when focused
             .bind( 'focus', function() {
               // see if hint is being displayed
@@ -150,6 +158,12 @@ jQuery.fn.extend({
                 jCustomInputObject.removeClass( 'hint');
                 customInputObject.value ='';
               }
+              
+              var e =jQuery.Event( 'focus');
+              e.preventDefault();
+              
+              // transfer event
+              jQuery.event.trigger( e, null, input);
             });
             
         } else {
@@ -163,10 +177,12 @@ jQuery.fn.extend({
             // copy new value to the original input
             input.value =customInputObject.value;
             
-            debug( 'change, new value "' +input.value +'"');
+            // transfer event
+            jQuery.event.trigger( 'change', null, input);
           });
       });
     
+    return this;
   },
   
   // get input element of custom text input
