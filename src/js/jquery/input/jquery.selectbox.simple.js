@@ -51,8 +51,11 @@ jQuery.fn.extend({
       // show element to obtain correct css values
       jMenu
         .show()
-        .css( 'left', '0px')
-        .css( 'right', '0px');
+        // backup offsets
+        .data( '__originalOffsets', {
+          'top': jMenu.css( 'top'),
+          'left': jMenu.css( 'left')
+        });
       
       // align to viewport
       jMenu
@@ -92,9 +95,26 @@ jQuery.fn.extend({
     var options =jSbox.data( '__options');
     
     function postHide() {
+      if( isAbsolutePositioned) {
+        // restore positioning
+        var originalOffsets =jMenu.data( '__originalOffsets');
+        
+        jMenu
+          // restore offsets
+          .css({
+            'top': originalOffsets.top,
+            'left': originalOffsets.left
+          })
+          // remove data
+          .removeData( '__originalOffsets')
+      }
+      
       // clear menu's contents
       jMenu
-        .html( '');
+        .html( '')
+        // hide completely (this fixes bug when element's parent is being hidden before
+        //  it's animation has completed. in that case element remains visible on the screen)
+        .hide();
     }
     
     // stop all animations if such existed
@@ -113,7 +133,6 @@ jQuery.fn.extend({
       break;
       case jQuery.SELECTBOX_EFFECT_NONE:
       default:
-        jMenu.hide();
         postHide();
       break;
     }

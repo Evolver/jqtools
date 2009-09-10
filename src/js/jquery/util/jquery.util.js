@@ -98,7 +98,7 @@ jQuery.fn.extend({
       parent =parent.parentNode;
       
       try {
-        if( jQuery(parent).css( 'position') !='static')
+        if( parent.nodeName =='BODY' || jQuery(parent).css( 'position') !='static')
           return parent;
           
       } catch( e) {
@@ -109,5 +109,33 @@ jQuery.fn.extend({
     // no relative element found
     return null;
   },
+  
+  // see if element is descendant of specified element
+  isDescendantOf: function( element, allowEquality) {
+    this.assertSingle();
+    
+    if( allowEquality ===undefined)
+      allowEquality =false;
+    
+    var node =this.get(0);
+    
+    if( allowEquality && node ==element)
+      return true;
+    
+    try {
+      while( node.parentNode) {
+        node =node.parentNode;
+        
+        if( node ==element)
+          return true;// is descendant
+      }
+    } catch( e) {
+      // assume failure
+      return false;
+    }
+    
+    // did not found
+    return false;
+  }
   
 });

@@ -1215,6 +1215,54 @@ jQuery.each({
 	};
 });
 
+// Remove all nodes one by one starting from the deepest node
+jQuery.removeDeep =function( elem) {
+  while( elem.childNodes.length >0)
+    jQuery.removeDeep( elem.childNodes[0]);
+  
+  // remove node
+  if( !elem.parentNode)
+    return;// already removed
+    
+  // remove node
+  elem.parentNode.removeChild( elem);
+    
+  if( jQuery.browser.msie) {
+    // IE bug fix. If we don't check if node still remains in parent's
+    //  childNodes, then IE (yes, IE8) will fall into an endless loop.
+    
+    // see if element's parentNode is still present. This check is somekinda
+    //  weird, because parentNode SHOULD be null, at least in most browsers
+    //  it is (in Safari, Google Chrome, Opera, Netscape, Mozilla Firefox),
+    //  but, if miracle will happen, and IE team will fix this bug, this 'if'
+    //  will avoid iteration.
+    if( elem.parentNode !==null) {
+      var found =false;
+      for( var i =0; i < elem.parentNode.childNodes.length; ++i)
+        if( elem.parentNode.childNodes[i] ==elem)
+          found =true;
+      
+      if( found) {
+        return; // this indicates that node is pending for delete, and,
+                //  after some time burning CPU cycles this node will
+                //  have parentNode set to null.
+      }
+    }
+  }
+
+  // alloc event
+  var e =jQuery.Event( 'remove');
+  e.stopPropagation();
+  e.preventDefault();
+  
+  // trigger a removal event
+  jQuery.event.trigger( e, null, elem);
+  
+  // remove all data associated to object within jQuery library
+  jQuery.event.remove(elem);
+	jQuery.removeData(elem);
+};
+
 jQuery.each({
 	removeAttr: function( name ) {
 		jQuery.attr( this, name, "" );
@@ -1238,19 +1286,12 @@ jQuery.each({
 
 	remove: function( selector ) {
 		if ( !selector || jQuery.filter( selector, [ this ] ).length ) {
-		  // instantiate event object
-		  var e =jQuery.Event( 'remove');
-
-			// Prevent memory leaks
-			jQuery( "*", this ).add([this]).each(function(){
-			  // trigger an 'onremove' event on node and it's subnodes.
-			  //  Since 'onremove' event is not native DOM event, we use
-			  //  triggerHandler to trigger callbacks only.
-			  jQuery(this).triggerHandler( e);
-			  
-				jQuery.event.remove(this);
-				jQuery.removeData(this);
+		  // Remove data, nodes and prevent memory leaks
+		  jQuery( "*", this ).add([this]).each(function(){
+		    // Remove nodes and trigger 'remove' events
+			  jQuery.removeDeep(this);
 			});
+			// Perform extra removal of nodes if something has left (should not be left)
 			if (this.parentNode)
 				this.parentNode.removeChild( this );
 		}
@@ -4176,6 +4217,9 @@ jQuery.extend( jQuery.fx, {
 if ( document.documentElement["getBoundingClientRect"] )
 	jQuery.fn.offset = function() {
 		if ( !this[0] ) return { top: 0, left: 0 };
+		// ownerDocument sometimes is set to null, guess this is a bug.
+		if ( !this[0].ownerDocument)
+		  throw 'Unable to obtain offset for specified element. ownerDocument is undefined.';
 		if ( this[0] === this[0].ownerDocument.body ) return jQuery.offset.bodyOffset( this[0] );
 		var box  = this[0].getBoundingClientRect(), doc = this[0].ownerDocument, body = doc.body, docElem = doc.documentElement,
 			clientTop = docElem.clientTop || body.clientTop || 0, clientLeft = docElem.clientLeft || body.clientLeft || 0,

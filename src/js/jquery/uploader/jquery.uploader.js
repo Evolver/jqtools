@@ -121,6 +121,7 @@ jQuery.fn.extend({
         'file_types': options.fileTypes,
         'file_types_description': options.fileTypeDescr,
         'file_size_limit': options.maxSize,
+        'preserve_relative_urls': true,
         
         'button_placeholder_id': containerId +'_placeholder',
         'button_window_mode': SWFUpload.WINDOW_MODE.TRANSPARENT,
@@ -234,10 +235,17 @@ jQuery.fn.extend({
             };
             
             // convert server data if needed
-            if( options.responseType ==jQuery.UPLOADER_RESPONSE_RAW)
+            if( options.responseType ==jQuery.UPLOADER_RESPONSE_RAW) {
               data.response =serverData;
-            else if( options.responseType ==jQuery.UPLOADER_RESPONSE_JSON)
-              data.response =eval( '(' +serverData +')');
+              
+            } else if( options.responseType ==jQuery.UPLOADER_RESPONSE_JSON) {
+              try {
+                data.response =eval( '(' +serverData +')');
+              } catch( e) {
+                // failed to evaluate data from server
+                throw 'Failed to parse JSON data from server. Server sends data in invalid format.';
+              }
+            }
             
             jUploader.triggerHandler( e, data);
           }
@@ -255,6 +263,76 @@ jQuery.fn.extend({
 
       });
       
+      // uploader alignment function
+      var alignUploader =function() {
+        var jSwfu =jQuery( '#' +containerId);
+        var dim =jSwfu.data( '__dimensions');
+        
+        var offs =jUploader.offset();
+        var outerWidth =jUploader.outerWidth();
+        var outerHeight =jUploader.outerHeight();
+        
+        if( dim ===undefined ||
+            dim.left !=offs.left ||
+            dim.top !=offs.top ||
+            dim.width !=outerWidth ||
+            dim.height !=outerHeight ||
+            dim.callflashFailed) {
+          // get relative container
+          var relContainer =jUploader.getRelativeContainer();
+          if( relContainer !==null) {
+            // relative container is available
+            // get relative container offset
+            var jRelContainer =jQuery(relContainer);
+            var relOffs =jRelContainer.offset();
+            // calculate true position of element
+            var pos ={
+              'left': offs.left -relOffs.left,
+              'top': offs.top -relOffs.top
+            };
+          } else {
+            var pos =jUploader.position();
+          }
+            
+          // resize flash container and flash object
+          jSwfu
+            // resize OBJECT or any underlying element in flash container
+            .add( jSwfu.find( '> *').get(0)/* expecting an OBJECT element here */)
+            .css({
+              'width': outerWidth,
+              'height': outerHeight
+            })
+            
+          // update flash
+          var callflashFailed =false;
+          
+          try {
+            swfu.callFlash( 'SetButtonDimensions', [outerWidth, outerHeight]);
+            
+          } catch( e) {
+            // failed to call flash... Adobe, adobe...
+            callflashFailed =true;
+          }
+          
+          // position flash container
+          jSwfu
+            .css({
+              'left': pos.left,
+              'top': pos.top
+            })
+            .data( '__dimensions', {
+              'width': outerWidth,
+              'height': outerHeight,
+              'left': offs.left,
+              'top': offs.top,
+              'callflashFailed': callflashFailed
+            });
+        }
+      };
+      
+      // perform alignment instantly
+      alignUploader();
+      
       // attach SWFUpload object to currently selected element
       jUploader
         // mark element as uploader instance
@@ -264,62 +342,7 @@ jQuery.fn.extend({
         // store SWFUpload flash object container
         .data( '__swfuContainer', document.getElementById( containerId))
         // setup alignment interval
-        .data( '__alignInterval', setInterval( function(){
-          var jSwfu =jQuery( '#' +containerId);
-          var dim =jSwfu.data( '__dimensions');
-          
-          var offs =jUploader.offset();
-          var outerWidth =jUploader.outerWidth();
-          var outerHeight =jUploader.outerHeight();
-          
-          if( dim ===undefined ||
-              dim.left !=offs.left ||
-              dim.top !=offs.top ||
-              dim.width !=outerWidth ||
-              dim.height !=outerHeight) {
-            // get relative container
-            var relContainer =jUploader.getRelativeContainer();
-            if( relContainer !==null) {
-              // relative container is available
-              // get relative container offset
-              var jRelContainer =jQuery(relContainer);
-              var relOffs =jRelContainer.offset();
-              // calculate true position of element
-              var pos ={
-                'left': offs.left -relOffs.left,
-                'top': offs.top -relOffs.top
-              };
-            } else {
-              var pos =jUploader.position();
-            }
-              
-            // resize flash container and flash object
-            jSwfu
-              // resize OBJECT or any underlying element in flash container
-              .add( jSwfu.find( '> *').get(0)/* expecting an OBJECT element here */)
-              .css({
-                'width': outerWidth,
-                'height': outerHeight
-              })
-              
-            // position flash container
-            jSwfu
-              .css({
-                'left': pos.left,
-                'top': pos.top
-              })
-              .data( '__dimensions', {
-                'width': outerWidth,
-                'height': outerHeight,
-                'left': offs.left,
-                'top': offs.top
-              });
-              
-            // update flash
-            swfu.callFlash( 'SetButtonDimensions', [outerWidth, outerHeight]);
-          }
-          
-        }, options.alignFreq));
+        .data( '__alignInterval', setInterval( alignUploader, options.alignFreq));
       
       // listen to 'remove' event to gracefully cleanup when element is
       //  removed from DOM
@@ -330,7 +353,7 @@ jQuery.fn.extend({
           // cancel alignment timer
           clearInterval( jThis.data( '__alignInterval'));
           
-          // grafully destroy swfu data
+          // gracefully destroy swfu data
           jThis.data( '__swfu').destroy();
           
           // remove swfu container

@@ -159,7 +159,7 @@ jQuery.fn.extend({
           
           // toggle select box
           if( !wasOpened)
-            jCustomSbox.toggleSelectbox();
+            jCustomSbox.openSelectbox();
           
           // stop event propagation
           e.stopPropagation();
