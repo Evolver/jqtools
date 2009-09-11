@@ -1,0 +1,5 @@
+
+- Form reset is not supported! Custom inputs do not reflect any changes made during
+   form reset. This is because neither 'change' event is being fired on reset form
+   elements, neither 'reset' event is being triggered on form element in any browser
+   except Opera.

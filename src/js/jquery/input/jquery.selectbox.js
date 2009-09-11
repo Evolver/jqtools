@@ -165,12 +165,16 @@ jQuery.fn.extend({
           e.stopPropagation();
         });
 
-        // pass these event handling to the original SELECT element
+        // pass these event handling to the original SELECT element.
+        // Google Chrome has a bug with handling this. Chrome does
+        // not register (at least i tested mouseover and mouseout)
+        // events and does not pass them to sbox object. This is
+        // not Webkit-specific bug, Safari handles this well.
         jQuery.transferEvents(
           [
             'mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'dblclick',
             'mousedown', 'mouseup', 'mousemove', 'keydown', 'keypress', 'keyup', 'blur',
-            'focus', 'change'
+            'focus'
           ],
           jCustomSbox._getSelectboxValueObject().get(0),
           sbox);

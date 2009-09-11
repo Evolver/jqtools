@@ -38,7 +38,7 @@ jQuery.fn.extend({
           
         var type =this.getAttribute( 'type');
         
-        return ( type =='text' || type =='password')
+        return ( type =='text' || type =='password');
       })
       .each(function(){
         

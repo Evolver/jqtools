@@ -1,0 +1,3 @@
+- IE has a bug with border/background instant change during click event handling,
+    so it is not possible to correctly display buttons with pressed state. Other
+    browsers, ofcourse, handle this well.

@@ -33,7 +33,7 @@ jQuery.fn.extend({
           
         var type =this.getAttribute( 'type');
         
-        return ( type =='checkbox' || type =='radio')
+        return ( type =='checkbox' || type =='radio');
       })
       .each(function(){
         
