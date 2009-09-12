@@ -62,7 +62,8 @@ jQuery.fn.extend({
         // align to viewport
         .alignToViewport({
           // hide after alignment
-          hide: true
+          hide: true,
+          gap: 5 // 5 pixel viewport gap
         });
     }
     

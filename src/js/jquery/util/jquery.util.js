@@ -26,9 +26,11 @@ jQuery.extend({
     for( var i =0; i < whichEvents.length; ++i) {
       var evt =whichEvents[i];
       
-      jQuery(source).bind( evt, function( e){
-        jQuery(target).trigger( e.type);
+      jQuery(source).bind( evt, function( e, data){
+        // route event further
+        jQuery(target).trigger( e, data, target);
         
+        // stop propagation
         e.stopPropagation();
       });
     }

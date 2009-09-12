@@ -24,3 +24,5 @@
     from potential data injection from server side.
 
 - Rewrite native jQuery.ajax readystatechange code, it's a little bit messy.
+
+- Figure out how to make native .focus() and .blur() methods work for inputs wrapped with jquery/input/jquery.*.js

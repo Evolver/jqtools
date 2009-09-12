@@ -166,6 +166,13 @@ jQuery.fn.extend({
         }
           
         jCustomInputObject
+          // trigger change on every keydown
+          .bind( 'keydown', function(e){
+            setTimeout( function(){
+              // trigger change after some time
+              jCustomInputObject.trigger( 'change');
+            }, 0);
+          })
           // reflect changes on a target element
           .bind( 'change', function(e){
             // copy new value to the original textarea
