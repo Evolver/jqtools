@@ -12,11 +12,15 @@
    
 - Documentation for jQuery.textinput
 
+- Documentation for jQuery.button
+
+- Documentation for jQuery.checkbox
+
+- Documentation for jQuery.textarea
+
 - Finish menu documentation.
 
 - Implement JSON validation in every place, where eval() takes place. This is needed to protect
     from potential data injection from server side.
-    
-- Create custom inputs: button (for input types "button", "submit", "reset"), checkbox and radio.
 
-- Rewrite jQuery.ajax readystatechange code, it's a little bit messy.
+- Rewrite native jQuery.ajax readystatechange code, it's a little bit messy.

@@ -50,6 +50,7 @@ jQuery.fn.extend({
         
         var customInputId =jQuery.uniqueId();
         var inputClass =input.className;
+        var inputStyle =input.getAttribute( 'style');
         
         if( this.nodeName =='BUTTON')
           // get inner html to copy as the button's label
@@ -63,7 +64,7 @@ jQuery.fn.extend({
           .hide()
           // insert table right after select box object
           .after(
-            '<table id="' +customInputId +'" class="' +inputClass +'">' +
+            '<table id="' +customInputId +'" class="' +inputClass +'" style="' +(inputStyle ===null ? '' : inputStyle) +'">' +
             '<tr class="top">' +
               '<td class="left"></td>' +
               '<td class="mid"></td>' +

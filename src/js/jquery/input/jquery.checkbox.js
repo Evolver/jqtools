@@ -42,13 +42,26 @@ jQuery.fn.extend({
         
         var customInputId =jQuery.uniqueId();
         var inputClass =input.className;
-        var inputType =this.getAttribute( 'type');
+        var inputType =input.getAttribute( 'type');
+        var inputStyle =input.getAttribute( 'style');
+
+        /*
+        if( jQuery.browser.msie || jQuery.browser.opera) {
+          
+          jInput.hideFromCanvas();
+          
+        } else {
+          // other browsers manage event triggering well, so we can
+          //  safely hide the checkboxes or radioboxes.
+          jInput.hide();
+        }
+        */
         
         jInput
           // hide input
           .hide()
           // insert table right after checkbox object
-          .after( '<div id="' +customInputId +'" class="' +inputClass +'"></div>');
+          .after( '<div id="' +customInputId +'" class="' +inputClass +'" style="' +(inputStyle ===null ? '' : inputStyle) +'"></div>');
           
         var customInput =document.getElementById( customInputId);
         var jCustomInput =jQuery(customInput);
@@ -86,8 +99,8 @@ jQuery.fn.extend({
             jCustomInput.removeAttr( 'checked');
             
           if( jQuery.browser.msie)
-            // IE8 fails to draw background change until mouse is out
-            //  of the element.
+            // BUG: IE8 fails to draw background change until
+            //  mouse is out of the element.
             jCustomInput.hide().show();
         };
         
@@ -96,15 +109,9 @@ jQuery.fn.extend({
           updateStatus();
         });
 
-        // listen to change event
+        // listen to events on original input
         jInput
-          .bind( 'change', function(e){
-            // reflect changes
-            updateStatus();
-          });
-        
-        // listen to click event
-        jCustomInput
+          // handle clicks
           .bind( 'click', function(e){
             if( inputType =='radio') {
               // see if radio box has any name set
@@ -131,17 +138,84 @@ jQuery.fn.extend({
                 elem.checked =false;
                 
                 // trigger change
-                jQuery.event.trigger( 'change', null, elem);
+                jQuery(elem).trigger( 'change');
               }
             }
-
-            // trigger click and change
-            jInput.trigger( 'click');
-            jInput.trigger( 'change');
             
-            // stop propagation
+            if( jQuery.browser.opera) {
+              // BUG: Opera has trouble changing checked state for hidden
+              //  checkboxes. To workaround this, we explicitly will negate
+              //  current checkbox state.
+              input.checked =!input.checked;
+              
+              // prevent default browser action
+              e.preventDefault();
+              
+              // fire additional change event because opera does not
+              //  fire change event when clicking checkboxes' label.
+              jInput.trigger( 'change');
+            }
+            
+            if( jQuery.browser.msie) {
+              // BUG: IE does not trigger change event
+              //  when clicking checkbox directly, but fires when
+              //  either clicking somewhere else or when clicking
+              //  checkboxes label (BUG). We fire additional change
+              //  event here to workaround this.
+              function triggerChange() {
+                jInput.trigger( 'change');
+              };
+              
+              // this makes change event to be triggered after click
+              //  event handler is being executed.
+              setTimeout( triggerChange, 0);
+            }
+              
+          })
+          // handle state changes
+          .bind( 'change', function(e){
+            // reflect changes
+            updateStatus();
+          });
+
+        // listen to events on custom input
+        jCustomInput
+          .bind( 'click', function(e){
+            // trigger click. Since this does not trigger 'change',
+            //  trigger 'change' event also.
+            jInput.trigger( 'click');
+
+            // trigger change
+            if( !jQuery.browser.msie)
+              // this event is being triggered during 'click'
+              //  on original element.
+              jInput.trigger( 'change');
+              
             e.stopPropagation();
           });
+          
+        // BUG: internet explorer does not trigger click event
+        //  for hidden checkboxes or radio buttons if
+        //  their label is clicked. Find any labels referring
+        //  to current input and make them fire click event.
+        if( jQuery.browser.msie) {
+          var id =input.getAttribute( 'id');
+          
+          if( id !==null) {
+            // labels can be attached only to inputs with explicit
+            //  "id" attribute.
+            jQuery( 'label[for="' +id +'"]')
+              .click( function(e){
+                // stop propagation
+                e.stopPropagation();
+                // prevent default action
+                e.preventDefault();
+                
+                // trigger click event on a related input
+                jInput.trigger( 'click');
+              });
+          }
+        }
       });
     
     return this;

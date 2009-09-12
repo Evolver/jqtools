@@ -27,12 +27,20 @@ jQuery.extend({
       var evt =whichEvents[i];
       
       jQuery(source).bind( evt, function( e){
-        jQuery(target).trigger( jQuery.Event( e.type));
+        jQuery(target).trigger( e.type);
         
         e.stopPropagation();
       });
     }
   },
+  
+  // escape HTML code (convert special chars to HTML entities)
+  escapeHTML: function( html) {
+    var div =document.createElement( 'div');
+    var text =document.createTextNode( html);
+    div.appendChild( text);
+    return div.innerHTML;
+  }
 
 });
 
@@ -136,6 +144,32 @@ jQuery.fn.extend({
     
     // did not found
     return false;
+  },
+  
+  // hide element by moving ot outside the document canvas
+  hideFromCanvas: function() {
+    // obtain document width;
+    var docWidth =$(document.body).outerWidth(true);
+    
+    // move all context elements outside the x axis.
+    this
+      .css( 'position', 'absolute')
+      .each(function(){
+        var jThis =jQuery(this);
+        
+        // why do we change only X axis, you may ask? This is needed
+        //  to preserve the Y axis. For example, when you have moved
+        //  checkbox outside the document canvas, and that checkbox
+        //  has a <label> attached to it, when a label will be clicked,
+        //  Opera and IE will scroll the screen to the Y axis of the
+        //  checkbox. To avoid this, that's why we change only X axis.
+        // Yes, if the document is wider than browser's window size,
+        //  and checkbox is on the right side of the canvas, then
+        //  screen will be scrolled to the left. But, it's rare situation
+        //  when the scrolling will take place. I agree that this has
+        //  to be fixed in the future.
+        jThis.css( 'left', '-' +(docWidth +jThis.outerWidth(true)) +'px');
+      });
   }
   
 });

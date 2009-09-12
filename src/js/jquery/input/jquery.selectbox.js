@@ -106,13 +106,14 @@ jQuery.fn.extend({
         // get select box input name
         var customSboxId =jQuery.uniqueId();
         var sboxClass =sbox.className;
+        var sboxStyle =sbox.getAttribute( 'style');
 
         jSbox
           // hide select box
           .hide()
           // insert table right after select box object
           .after(
-            '<table id="' +customSboxId +'" class="' +sboxClass +'">' +
+            '<table id="' +customSboxId +'" class="' +sboxClass +'" style="' +(sboxStyle ===null ? '' : sboxStyle) +'">' +
             '<tr class="top">' +
               '<td class="left"></td>' +
               '<td class="mid"></td>' +
@@ -213,6 +214,8 @@ jQuery.fn.extend({
         // initialize presentation layer
         options.presentation.init.call( customSbox);
       });
+      
+    return this;
   },
   
   // toggle select box

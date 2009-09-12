@@ -3,7 +3,7 @@
   * E-Mail: dmitrij@stepanov.lv
   * URL: http://www.stepanov.lv
   *
-  * Custom text input
+  * Custom textarea
   */
 
 if( typeof jQuery =='undefined')
@@ -13,32 +13,26 @@ if( typeof jQuery.utilVersion =='undefined')
 
 jQuery.extend({
   
-  textinputVersion: 1.0
+  textareaVersion: 1.0
   
 });
 
 jQuery.fn.extend({
   
-  textinput: function( options) {
+  textarea: function( options) {
     
     if( options ===undefined)
       options ={};
       
     // use hints?
-    //  NOTE: hints can be used only on non-password inputs
     if( options.hint ===undefined)
       options.hint =true;
       
     // iterate each item
     this
       .filter( function(){
-        // keep only text inputs
-        if( this.nodeName !='INPUT')
-          return false;
-          
-        var type =this.getAttribute( 'type');
-        
-        return ( type =='text' || type =='password');
+        // keep only text areas
+        return this.nodeName =='TEXTAREA';
       })
       .each(function(){
         
@@ -47,7 +41,6 @@ jQuery.fn.extend({
         
         var customInputId =jQuery.uniqueId();
         var inputClass =input.className;
-        var inputType =input.getAttribute( 'type');
         var inputValue =input.getAttribute( 'value');
         var inputStyle =input.getAttribute( 'style');
         
@@ -65,7 +58,7 @@ jQuery.fn.extend({
             '<tr class="mid">' +
               '<td class="left"></td>' +
               '<td class="canvas">' +
-                '<input type="' +inputType +'" />' +
+                '<textarea></textarea>' +
               '</td>' +
               '<td class="right"></td>' +
             '</tr>' +
@@ -81,7 +74,7 @@ jQuery.fn.extend({
         var jCustomInput =jQuery(customInput);
         
         jCustomInput
-          // reference original input element
+          // reference original textarea element
           .data( '__input', input)
           // mark as textinput
           .data( '__textinput', true)
@@ -89,10 +82,10 @@ jQuery.fn.extend({
           .data( '__options', options);
         
         // get input object of custom text input
-        var jCustomInputObject =jCustomInput._getTextinputInputObject();
+        var jCustomInputObject =jCustomInput._getTextinputTextareaObject();
         var customInputObject =jCustomInputObject.get(0);
         
-        // transfer these events to the original input element
+        // transfer these events to the original textarea element
         jQuery.transferEvents(
           [
             'mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'dblclick',
@@ -110,7 +103,7 @@ jQuery.fn.extend({
           });
 
         // use hints?
-        if( inputType !='password' && options.hint) {
+        if( options.hint) {
           // function to check if hint needs to be displayed,
           //  and if it does, hint is being displayed
           function showHint() {
@@ -125,11 +118,11 @@ jQuery.fn.extend({
             }
           };
         
-          // see if current input's value matches input's value attribute
+          // see if current textarea's value matches textarea's value attribute
           if( inputValue ==input.value || input.value =='') {
             // if we don't get here, it means, that user has pressed 'back'
             //  button, and user agent has filled in form for him, so we
-            //  must not show hint, util current input's value is empty
+            //  must not show hint, util current textarea's value is empty
             showHint();
             
             if( input.value !='')
@@ -175,7 +168,7 @@ jQuery.fn.extend({
         jCustomInputObject
           // reflect changes on a target element
           .bind( 'change', function(e){
-            // copy new value to the original input
+            // copy new value to the original textarea
             input.value =customInputObject.value;
             
             // transfer event
@@ -187,10 +180,10 @@ jQuery.fn.extend({
   },
   
   // get input element of custom text input
-  _getTextinputInputObject: function() {
+  _getTextinputTextareaObject: function() {
     this.assertSingle();
     
-    return this.find( '> tbody > tr.mid > td.canvas > input');
+    return this.find( '> tbody > tr.mid > td.canvas > textarea');
   }
   
 });
