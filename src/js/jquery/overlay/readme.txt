@@ -6,7 +6,7 @@ Theory:
   
   Before using the API, you need to initialize overlay by calling $( overlaySelector).overlay({...}).
   
-  To open overlay, call openOverlay(), to close, call closeOverlay().
+  To open overlay, call openOverlay( [optional] data), to close, call closeOverlay().
 
 minimal markup:
 
@@ -20,7 +20,7 @@ API:
   jOverlay.overlay({...});
   
   // methods
-  bool jOverlay.openOverlay();
+  bool jOverlay.openOverlay( data);
   bool jOverlay.closeOverlay();
   bool jOverlay.isOverlayOpened();
   bool jOverlay.hasChildOverlayOpened();
@@ -70,9 +70,10 @@ usage:
        *  if overlay should be continued loading.
        *
        * @param DOMElement overlay
+       * @param undefined/mixed data
        * @return boolean
        */
-      beforeOpen: function( overlay) {
+      beforeOpen: function( overlay, data) {
         return true;
       },
       
@@ -80,8 +81,9 @@ usage:
        * Callback to call after overlay has finished loading and is visible.
        *
        * @param DOMElement overlay
+       * @param undefined/mixed data
        */
-      open: function( overlay) {
+      open: function( overlay, data) {
       },
       
       /**

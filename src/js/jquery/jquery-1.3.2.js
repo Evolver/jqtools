@@ -2684,30 +2684,54 @@ jQuery.event = {
 
 		event.currentTarget = elem;
 
-		// Trigger the event, it is assumed that "handle" is a function
+		// Call internal jQuery event handlers, it is assumed that "handle" is a function
 		var handle = jQuery.data(elem, "handle");
 		if ( handle )
 			handle.apply( elem, data );
-
-		// Handle triggering native .onfoo handlers (and on links since we don't call .click() for links)
-		if ( (!elem[type] || (jQuery.nodeName(elem, 'a') && type == "click")) && elem["on"+type] && elem["on"+type].apply( elem, data ) === false )
-			event.result = false;
-
-		// Trigger the native events (except for clicks on links)
-		if ( !bubbling && elem[type] && !event.isDefaultPrevented() && !(jQuery.nodeName(elem, 'a') && type == "click") ) {
-			this.triggered = true;
-			try {
-				elem[ type ]();
-			// prevent IE from throwing an error for some hidden elements
-			} catch (e) {}
+		
+		// see if default action is prevented within internal jQuery event handlers.
+		if( !event.isDefaultPrevented()) {
+		  // execute default browser's action
+		  if( !elem[type]) {
+		    // element does not have .type() method to call implicitly, so see if element
+		    //  has ontype handler. If has, call it, and store the return value since it
+		    //  does not affect the behavior.
+  		  if( elem['on'+type] && elem['on'+type].apply( elem, data) ===false)
+  		    event.result =false;
+  		    
+  		} else if( !bubbling) {
+  		  // only initial target gets it's default action triggered.
+  		  // Call native event handler, it will take care of .ontype() methods
+  		  //  internally, so we don't have to deal with them if we get here.
+  		  
+  		  // set flag to avoid re-triggering event by internal handlers
+  		  this.triggered =true;
+  		  
+	      try {
+  				elem[ type ]();
+  			// prevent IE from throwing an error for some hidden elements
+  			} catch (e) {}
+	    }
 		}
 
+		// reset triggering flag
 		this.triggered = false;
 
 		if ( !event.isPropagationStopped() ) {
-			var parent = elem.parentNode || elem.ownerDocument;
-			if ( parent )
-				jQuery.event.trigger(event, data, parent, true);
+		  // BUG: Event may get triggered twice for
+		  //  document element. The one, who made this
+		  //  bug come true, should have his hands
+		  //  cut off and fed to dogs, i have wasted
+		  //  the whole fucking day looking for this one.
+		  //  It was like - 'WHAT THE FUCK? I SHOULD
+		  //   REWRITE THE WHOLE EVENT SYS. BECAUSE THIS
+		  //   SHIT DOES NOT WORK. AND ALL BECAUSE OF
+		  //   ONE FUCKING LINE OF CODE OF COOL HAXOR
+		  //   WHO THINKS COMPLICATING THINGS IS THE
+		  //   SKILL EXPOSA! KISS, MOTHERFUCKER'.
+		  //  Yes, i think jQuery.event code sucks a lot.
+		  if( elem.parentNode)
+		    jQuery.event.trigger( event, data, elem.parentNode, true);
 		}
 	},
 

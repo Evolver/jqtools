@@ -22,16 +22,16 @@ jQuery.extend({
   
   // transfer events from object to object
   transferEvents: function( /* array */ whichEvents, /* DOMElement */ source, /* DOMElement */ target) {
-      
+    
     for( var i =0; i < whichEvents.length; ++i) {
       var evt =whichEvents[i];
       
       jQuery(source).bind( evt, function( e, data){
-        // route event further
-        jQuery(target).trigger( e, data, target);
+        jQuery.event.trigger( e, null, target);
         
         // stop propagation
         e.stopPropagation();
+        e.preventDefault();
       });
     }
   },

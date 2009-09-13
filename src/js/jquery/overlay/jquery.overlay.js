@@ -211,7 +211,7 @@ jQuery.fn.extend({
   },
   
   // open overlay
-  openOverlay: function() {
+  openOverlay: function( data) {
     this.assertSingle();
     this.assertOverlay();
     
@@ -226,7 +226,8 @@ jQuery.fn.extend({
       return true;// already opened
       
     // call callback before opening overlay
-    if( !options.beforeOpen( overlay))
+    var openResult =options.beforeOpen( overlay, data !==undefined ? data : undefined);
+    if( openResult !==undefined && !openResult)
       return false;// do not open overlay
       
     // see if this overlay has any parent overlays,
@@ -266,7 +267,7 @@ jQuery.fn.extend({
 
     // callback to call after overlay has been displayed
     function afterOpen() {
-      options.open( overlay);
+      options.open( overlay, data !==undefined ? data : undefined);
     }
     
     // apply display effect for the overlay
