@@ -1,0 +1,6 @@
+
+<h1>jQuery UI tools</h1>
+
+**jQuery UI tools** - collection of useful tools, like ajax menus, native select box
+and input wrappers that allow to style them using CSS, nested overlays with nice
+effects and much more.
