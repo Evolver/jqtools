@@ -11,17 +11,19 @@
  *
  */
 
-
+// enclose SWFUpload in it's own scope
+(function(){
+  
 /* ******************* */
 /* Constructor & Init  */
 /* ******************* */
-var SWFUpload;
+var undefined;
+var api =this;
 
-if (SWFUpload == undefined) {
-	SWFUpload = function (settings) {
-		this.initSWFUpload(settings);
-	};
-}
+var SWFUpload =api.SWFUpload =function( settings) {
+  // initialize SWFUpload
+	this.initSWFUpload(settings);
+};
 
 SWFUpload.prototype.initSWFUpload = function (settings) {
 	try {
@@ -29,8 +31,6 @@ SWFUpload.prototype.initSWFUpload = function (settings) {
 		this.settings = settings;
 		this.eventQueue = [];
 		this.movieName = "SWFUpload_" + SWFUpload.movieCount++;
-		this.movieElement = null;
-
 
 		// Setup global control tracking
 		SWFUpload.instances[this.movieName] = this;
@@ -280,15 +280,12 @@ SWFUpload.prototype.getFlashVars = function () {
 // Public: getMovieElement retrieves the DOM reference to the Flash element added by SWFUpload
 // The element is cached after the first lookup
 SWFUpload.prototype.getMovieElement = function () {
-	if (this.movieElement == undefined) {
-		this.movieElement = document.getElementById(this.movieName);
-	}
-
-	if (this.movieElement === null) {
-		throw "Could not find Flash element";
-	}
+  var movieElement =document.getElementById( this.movieName);
+  
+  if( movieElement ===null)
+    throw 'Could not find movie element';
 	
-	return this.movieElement;
+  return movieElement;
 };
 
 // Private: buildParamString takes the name/value pairs in the post_params setting object
@@ -312,50 +309,50 @@ SWFUpload.prototype.buildParamString = function () {
 // all references to the SWF, and other objects so memory is properly freed.
 // Returns true if everything was destroyed. Returns a false if a failure occurs leaving SWFUpload in an inconsistant state.
 // Credits: Major improvements provided by steffen
-SWFUpload.prototype.destroy = function () {
-	try {
-		// Make sure Flash is done before we try to remove it
-		this.cancelUpload(null, false);
-		
+SWFUpload.prototype.destroy = function(){
+  // see if movie name is removed. This means, that destroy was
+  //  already called for this object.
+  if( this.movieName ===null)
+    throw 'Reentrancy in SWFUpload.destroy() is not allowed.';
 
-		// Remove the SWFUpload DOM nodes
-		var movieElement = null;
-		movieElement = this.getMovieElement();
-		
-		if (movieElement && typeof(movieElement.CallFunction) === "unknown") { // We only want to do this in IE
-			// Loop through all the movie's properties and remove all function references (DOM/JS IE 6/7 memory leak workaround)
-			for (var i in movieElement) {
-				try {
-					if (typeof(movieElement[i]) === "function") {
-						movieElement[i] = null;
-					}
-				} catch (ex1) {}
-			}
-
-			// Remove the Movie Element from the page
-			try {
-				movieElement.parentNode.removeChild(movieElement);
-			} catch (ex) {}
-		}
-		
-		// Remove IE form fix reference
-		window[this.movieName] = null;
-
-		// Destroy other references
-		SWFUpload.instances[this.movieName] = null;
-		delete SWFUpload.instances[this.movieName];
-
-		this.movieElement = null;
-		this.settings = null;
-		this.customSettings = null;
-		this.eventQueue = null;
-		this.movieName = null;
-		
-		
-		return true;
-	} catch (ex2) {
-		return false;
-	}
+  // perform basic cleanup. Remove flash from DOM.
+  try {
+    var movieElement =this.getMovieElement();
+    
+    // see if flash has been loaded
+    if( !this.hasBeenLoaded) {
+      // flash was never loaded, perform movie element cleanup
+      this.cleanUp();
+      
+    } else {
+      // cancel upload
+      try {
+        this.cancelUpload( null, false);
+      } catch( e) { /* interface is not available anymore */ }
+    }
+    
+    // perform movie element removal from DOM
+    movieElement.parentNode.removeChild( movieElement);
+    
+  } catch( e) {
+    alert( 'Did not found movie element, it was already removed from page (' +e +')');
+  }
+  
+  // remove movie element reference from window
+  if( window[this.movieName] !==undefined)
+    try { delete window[this.movieName]; } catch( e) { window[this.movieName] =undefined; }
+  
+  // remove movie element reference from instance list
+  delete SWFUpload.instances[this.movieName];
+  
+  // dereference all local settings
+  this.movieName =null;
+	this.settings = null;
+	this.customSettings = null;
+	this.eventQueue = null;
+	
+	// instance removed
+	return true;
 };
 
 
@@ -452,7 +449,7 @@ SWFUpload.prototype.callFlash = function (functionName, argumentArray) {
 		returnString = movieElement.CallFunction('<invoke name="' + functionName + '" returntype="javascript">' + __flash__argumentsToXML(argumentArray, 0) + '</invoke>');
 		returnValue = eval(returnString);
 	} catch (ex) {
-		throw "Call to " + functionName + " failed";
+		throw "Call to " + functionName + " failed (" +ex +")";
 	}
 	
 	// Unescape file post param values
@@ -791,21 +788,29 @@ SWFUpload.prototype.flashReady = function () {
 	var movieElement = this.getMovieElement();
 
 	if (!movieElement) {
-		this.debug("Flash called back ready but the flash movie can't be found.");
+		throw "Flash called back ready but the flash movie can't be found.";
 		return;
 	}
 
-	this.cleanUp(movieElement);
+	// mark flash as loaded
+	this.hasBeenLoaded =true;
+	
+	// perform cleanup
+	this.cleanUp();
 	
 	this.queueEvent("swfupload_loaded_handler");
 };
 
 // Private: removes Flash added fuctions to the DOM node to prevent memory leaks in IE.
 // This function is called by Flash each time the ExternalInterface functions are created.
-SWFUpload.prototype.cleanUp = function (movieElement) {
+SWFUpload.prototype.cleanUp = function () {
+  // get current movie element
+  //var movieElement =this.getMovieElement();
+
+  /*
 	// Pro-actively unhook all the Flash functions
 	try {
-		if (this.movieElement && typeof(movieElement.CallFunction) === "unknown") { // We only want to do this in IE
+		if ( movieElement.CallFunction === undefined) { // We only want to do this in IE
 			this.debug("Removing Flash functions hooks (this should only run in IE and should prevent memory leaks)");
 			for (var key in movieElement) {
 				try {
@@ -818,22 +823,11 @@ SWFUpload.prototype.cleanUp = function (movieElement) {
 		}
 	} catch (ex1) {
 	
-	}
-
-	// Fix Flashes own cleanup code so if the SWFMovie was removed from the page
-	// it doesn't display errors.
-	window["__flash__removeCallback"] = function (instance, name) {
-		try {
-			if (instance) {
-				instance[name] = null;
-			}
-		} catch (flashEx) {
-		
-		}
-	};
-
+	}*/
 };
 
+// by default, SWFUpload instance is market as not loaded
+SWFUpload.prototype.hasBeenLoaded =false;
 
 /* This is a chance to do something before the browse window opens */
 SWFUpload.prototype.fileDialogStart = function () {
@@ -981,3 +975,6 @@ SWFUpload.Console.writeLine = function (message) {
 		alert("Exception: " + ex.name + " Message: " + ex.message);
 	}
 };
+  
+// define SWFUpload winthin window object context
+}).call( window);

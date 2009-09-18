@@ -57,7 +57,8 @@ jQuery.fn.extend({
   
   // ensure selected object is an uploader instance
   assertUploader: function() {
-    return this.data( '__uploader') !==undefined;
+    if( this.data( '__uploader') ===undefined)
+      throw 'Not an uploader instance';
   },
   
   // setup an upload overlay over specified elements
@@ -113,6 +114,14 @@ jQuery.fn.extend({
     this.each(function(){
       var uploader =this;
       var jUploader =jQuery(this);
+      
+      try {
+        jUploader.assertUploader();
+        return;// skip already initialized uploader instances
+      } catch( e) {}
+      
+      // set uploader marker
+      jUploader.data( '__uploader', true);
       
       // see what is display for target element
       var disp =jUploader.css( 'display');
@@ -259,7 +268,7 @@ jQuery.fn.extend({
                 data.response =eval( '(' +serverData +')');
               } catch( e) {
                 // failed to evaluate data from server
-                throw 'Failed to parse JSON data from server. Server sends data in invalid format.';
+                throw 'Failed to parse JSON data from server. Server sends data in invalid format (' +e +').';
               }
             }
             
@@ -349,42 +358,64 @@ jQuery.fn.extend({
       // perform alignment instantly
       alignUploader();
       
+      // remove function
+      var removeFn =function(){
+        var jThis =jQuery(this);
+        
+        // detach uploader
+        jThis.detachUploader();
+      };
+      
       // attach SWFUpload object to currently selected element
       jUploader
-        // mark element as uploader instance
-        .data( '__uploader', true)
         // store SWFUpload object reference
         .data( '__swfu', swfu)
         // store SWFUpload flash object container
         .data( '__swfuContainer', document.getElementById( containerId))
         // setup alignment interval
-        .data( '__alignInterval', setInterval( alignUploader, options.alignFreq));
+        .data( '__alignInterval', setInterval( alignUploader, options.alignFreq))
+        // remove function reference
+        .data( '__removeFn', removeFn);
       
       // listen to 'remove' event to gracefully cleanup when element is
       //  removed from DOM
       jUploader
-        .bind( 'remove', function( e){
-          var jThis =jQuery(this);
-          
-          // cancel alignment timer
-          clearInterval( jThis.data( '__alignInterval'));
-          
-          // gracefully destroy swfu data
-          jThis.data( '__swfu').destroy();
-          
-          // remove swfu container
-          jQuery( jThis.data( '__swfuContainer')).remove();
-          
-          // dereference SWFU object and remove data
-          jThis
-            .removeData( '__swfu')
-            .removeData( '__swfuContainer')
-            .removeData( '__alignInterval');
-        });
+        .bind( 'remove', removeFn);
       
     });
     
     return this;
+  },
+  
+  // detach uploader
+  detachUploader: function() {
+    this.assertSingle();
+
+    try {
+      this.assertUploader();
+    } catch( e) { return; }
+    
+    var jThis =this;
+    
+    // cancel alignment timer
+    clearInterval( jThis.data( '__alignInterval'));
+    
+    // gracefully destroy swfu data
+    jThis.data( '__swfu').destroy();
+    
+    // remove swfu container
+    jQuery( jThis.data( '__swfuContainer')).remove();
+    
+    // unbind remove event handler
+    jThis.unbind( 'remove', jThis.data( '__removeFn'));
+    
+    // dereference SWFU object and remove data
+    jThis
+      .removeData( '__swfu')
+      .removeData( '__swfuContainer')
+      .removeData( '__alignInterval')
+      .removeData( '__removeFn')
+      .removeData( '__uploader');
   },
   
   // get SWFUpload object instance

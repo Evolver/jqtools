@@ -47,7 +47,6 @@ jQuery.extend({
         
         // stop propagation
         e.stopPropagation();
-        e.preventDefault();
       });
     }
   },
@@ -119,21 +118,30 @@ jQuery.fn.extend({
     this.assertSingle();
     
     var parent =this.get(0);
+    
+    if( !parent.parentNode)// element has no parent elements
+      throw 'Invalid element selected for jQuery.getRelativeContainer.';
+      
+    if( !parent.parentNode.nodeName)// parent element has no node name
+      throw 'Invalid element selected for jQuery.getRelativeContainer.';
+    
+    // BUG: IE sets parentNode for elements removed from DOM
+    //  equal to their document. We workaround this by checking
+    //  if parent node is document.
+    if( parent.parentNode.getElementById)
+      throw 'Invalid element selected for jQuery.getRelativeContainer.';
 
     while( parent.parentNode) {
+      // reference parent node
       parent =parent.parentNode;
       
-      try {
-        if( parent.nodeName =='BODY' || jQuery(parent).css( 'position') !='static')
-          return parent;
-          
-      } catch( e) {
-        return null;
-      }
+      // BODY is the topmost element, we don't go upper than BODY.
+      if( parent.nodeName =='BODY' || jQuery(parent).css( 'position') !='static')
+        return parent;
     }
     
-    // no relative element found
-    return null;
+    // invalid node passed in
+    throw 'Invalid element selected for jQuery.getRelativeContainer.';
   },
   
   // see if element is descendant of specified element

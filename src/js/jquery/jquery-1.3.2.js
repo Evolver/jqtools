@@ -1224,31 +1224,26 @@ jQuery.removeDeep =function( elem) {
   if( !elem.parentNode)
     return;// already removed
     
-  // remove node
-  elem.parentNode.removeChild( elem);
-    
   if( jQuery.browser.msie) {
-    // IE bug fix. If we don't check if node still remains in parent's
-    //  childNodes, then IE (yes, IE8) will fall into an endless loop.
-    
-    // see if element's parentNode is still present. This check is somekinda
-    //  weird, because parentNode SHOULD be null, at least in most browsers
-    //  it is (in Safari, Google Chrome, Opera, Netscape, Mozilla Firefox),
-    //  but, if miracle will happen, and IE team will fix this bug, this 'if'
-    //  will avoid iteration.
-    if( elem.parentNode !==null) {
-      var found =false;
-      for( var i =0; i < elem.parentNode.childNodes.length; ++i)
-        if( elem.parentNode.childNodes[i] ==elem)
+    // IE leaves node's parentNode equal to document
+    //  when node is removed. Work around this bug.
+    if( elem.parentNode.getElementById) {
+      // see if parent node has current node as it's subnode
+      var found =false, i;
+      for( i =0; i < elem.parentNode.childNodes.length; ++i) {
+        if( elem.parentNode.childNodes[i] ==elem) {
           found =true;
-      
-      if( found) {
-        return; // this indicates that node is pending for delete, and,
-                //  after some time burning CPU cycles this node will
-                //  have parentNode set to null.
+          break;
+        }
       }
+      // did not found node?
+      if( !found)
+        return;// node is already removed from DOM.
     }
   }
+    
+  // remove node
+  elem.parentNode.removeChild( elem);
 
   // alloc event
   var e =jQuery.Event( 'remove');

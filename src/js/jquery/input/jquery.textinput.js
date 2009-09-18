@@ -64,6 +64,7 @@ jQuery.fn.extend({
         var inputType =input.getAttribute( 'type');
         var inputValue =input.getAttribute( 'value');
         var inputStyle =input.getAttribute( 'style');
+        var maxlength =input.getAttribute( 'maxlength');
         
         jInput
           // hide input
@@ -105,6 +106,10 @@ jQuery.fn.extend({
         // get input object of custom text input
         var jCustomInputObject =jCustomInput._getTextinputInputObject();
         var customInputObject =jCustomInputObject.get(0);
+        
+        // copy properties
+        if( maxlength !==null)
+          customInputObject.setAttribute( 'maxlength', maxlength);
         
         // transfer these events to the original input element
         jQuery.transferEvents(
