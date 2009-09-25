@@ -122,6 +122,16 @@ jQuery.fn.extend({
           
         // listen to events
         jInput
+          // listen to change events
+          .bind( 'change', function( e, data){
+            if( data ===undefined) {
+              // copy value to custom object
+              customInputObject.value =input.value;
+              
+              // reflect changes on a custom input object
+              jCustomInputObject.trigger( 'change', [{'internal':true}]);
+            }
+          })
           // cleanup when removed
           .bind( 'remove', function(e){
             // remove custom input
@@ -194,18 +204,29 @@ jQuery.fn.extend({
         jCustomInputObject
           // trigger change on every keydown
           .bind( 'keydown', function(e){
+            
+            // delayed update
             setTimeout( function(){
-              // trigger change after some time
+              // trigger change after some time.
+              //  This handles the situation when last pressed key is not being
+              //  included into the changes.
               jCustomInputObject.trigger( 'change');
             }, 0);
+            
+            // instant update without the last key pressed
+            jCustomInputObject.trigger( 'change');
+            
           })
           // reflect changes on a target element
-          .bind( 'change', function(e){
-            // copy new value to the original input
-            input.value =customInputObject.value;
-            
-            // transfer event
-            jQuery.event.trigger( 'change', null, input);
+          .bind( 'change', function(e, data){
+            if( data ===undefined) {
+              // copy value to original object
+              input.value =customInputObject.value;
+              
+              // reflect changes on an original input object
+              jInput.trigger( 'change', [{'internal':true}]);
+              
+            }
           });
       });
     

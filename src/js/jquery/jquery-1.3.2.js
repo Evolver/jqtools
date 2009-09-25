@@ -2630,6 +2630,9 @@ jQuery.event = {
 			}
 		}
 	},
+	
+	// by default - not triggered
+	triggered: false,
 
 	// bubbling is internal
 	trigger: function( event, data, elem, bubbling ) {
@@ -2678,6 +2681,9 @@ jQuery.event = {
 		}
 
 		event.currentTarget = elem;
+		
+		// reset triggering flag
+		jQuery.event.triggered = false;
 
 		// Call internal jQuery event handlers, it is assumed that "handle" is a function
 		var handle = jQuery.data(elem, "handle");
@@ -2700,17 +2706,17 @@ jQuery.event = {
   		  //  internally, so we don't have to deal with them if we get here.
   		  
   		  // set flag to avoid re-triggering event by internal handlers
-  		  this.triggered =true;
+  		  jQuery.event.triggered =true;
   		  
 	      try {
   				elem[ type ]();
   			// prevent IE from throwing an error for some hidden elements
   			} catch (e) {}
+  			
+  			// reset triggering flag
+		    jQuery.event.triggered = false;
 	    }
 		}
-
-		// reset triggering flag
-		this.triggered = false;
 
 		if ( !event.isPropagationStopped() ) {
 		  // BUG: Event may get triggered twice for
