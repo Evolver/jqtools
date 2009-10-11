@@ -58,6 +58,9 @@ jQuery.fn.extend({
         var inputValue =input.getAttribute( 'value');
         var inputStyle =input.getAttribute( 'style');
         
+        if( inputValue ===null)
+          inputValue ='';
+        
         jInput
           // hide input
           .hide()

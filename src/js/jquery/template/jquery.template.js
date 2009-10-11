@@ -39,7 +39,7 @@ jQuery.extend({
   
     // return output
     return tpl;
-  };
+  }
 
 });
 
@@ -50,6 +50,6 @@ jQuery.fn.extend({
     this.assertSingle();
       
     return jQuery.parse( this.html(), options);
-  };
+  }
   
 });

@@ -218,8 +218,13 @@ jQuery.fn.extend({
             options.presentation.cleanup.call( customSbox);
           });
           
-        // cleanup after select box object is removed
         jSbox
+          // reflect changes
+          .bind( 'change', function( e) {
+            // update selectbox value
+            jCustomSbox._updateSelectboxValue( false);
+          })
+          // cleanup after select box object is removed
           .bind( 'remove', function( e){
             // remove custom select box
             jCustomSbox.remove();

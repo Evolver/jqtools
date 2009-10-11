@@ -165,10 +165,12 @@ jQuery.fn.extend({
 
     var html ='';
     var i;
+	var opt;
     for( i =0; i < elem.options.length; ++i) {
+		opt =elem.options[i];
       html += '<div' +((multi ? elem.options[i].selected : elem.selectedIndex ==i) ? ' class="selected"' :'') +'>' +
                 (multi ? '<div class="checkbox"></div>' :'') +
-                '<div class="label">' +(elem.options[i].label) +'</div>' +
+                '<div class="label">' +(opt.label ? opt.label : opt.text) +'</div>' +
               '</div>';
     }
     

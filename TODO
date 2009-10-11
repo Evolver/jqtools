@@ -26,3 +26,7 @@
 - Rewrite native jQuery.ajax readystatechange code, it's a little bit messy.
 
 - Figure out how to make native .focus() and .blur() methods work for inputs wrapped with jquery/input/jquery.*.js
+
+- Implement value reset for original object if hints are used in for jQuery.textinput. Do this only when form is
+   submitted. If there is no form, do not implement this algorithm and use old one (if hint is displayed, original
+   box's value is equal to the hint phrase).

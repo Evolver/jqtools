@@ -66,6 +66,9 @@ jQuery.fn.extend({
         var inputStyle =input.getAttribute( 'style');
         var maxlength =input.getAttribute( 'maxlength');
         
+        if( inputValue ===null)
+          inputValue ='';
+        
         jInput
           // hide input
           .hide()

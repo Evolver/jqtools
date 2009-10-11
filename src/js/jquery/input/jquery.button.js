@@ -68,7 +68,7 @@ jQuery.fn.extend({
         
         if( this.nodeName =='BUTTON')
           // get inner html to copy as the button's label
-          var html =$(this).html();
+          var html =jQuery(this).html();
         else
           // copy the "value" property as the label
           var html =this.getAttribute( 'value');
