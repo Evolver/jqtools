@@ -22,17 +22,79 @@
 
 if( typeof jQuery =='undefined')
   throw 'jQuery library is required';
-if( typeof jQuery.utilVersion =='undefined')
+
+(function($){
+  
+if( typeof $.utilVersion =='undefined')
   throw 'jQuery.util library is required';
 
-jQuery.extend({
-  
+// extend core
+$.extend({
+  // library version
   checkboxVersion: 1.0
-  
 });
 
-jQuery.fn.extend({
+// custom functions
   
+// reflect radiobox changes
+function formReflectRadioboxChanges( input) {
+  // see if radio box has any name set
+  var name =input.getAttribute( 'name');
+  if( name ===null)
+    return;// name attribute not specified
+    
+  // see if input is within a form
+  if( input.form) {
+    // trigger change on all other radioboxes with same name
+    for( var i =0; i < input.form.elements.length; ++i) {
+      var elem =input.form.elements[i];
+      
+      if( elem.nodeName !='INPUT')
+        continue;// skip non-input elements
+      if( elem.getAttribute( 'type') !='radio')
+        continue;// skip non-radio inputs
+      if( elem.getAttribute( 'name') !=name)
+        continue;// skip radioboxes with another name
+      if( elem ==input)
+        continue;// skip current input
+        
+      var customInput =$(elem).data( '__customInput');
+        
+      if( customInput ===undefined)
+        continue;// skip non-initialized inputs
+        
+      if( !elem.checked && $(customInput).attr( 'checked') ===undefined)
+        continue;// skip synced radio boxes
+        
+      // sync radio boxes
+      elem.checked =false;
+      
+      // trigger change
+      updateStatus( elem);
+    }
+  }
+}
+
+// reflect single box change
+function updateStatus( input) {
+  // assign checked class if input is checked
+  var jCustomInput =$($(input).data( '__customInput'));
+  
+  if( input.checked)
+    jCustomInput.attr( 'checked', 'yes');
+  else
+    jCustomInput.removeAttr( 'checked');
+    
+  if( $.browser.msie)
+    // BUG: IE8 fails to draw background change until
+    //  mouse is out of the element.
+    jCustomInput.hide().show();
+}
+
+// extend fn
+$.fn.extend({
+  
+  // checkbox initializer
   checkbox: function( options) {
     
     if( options ===undefined)
@@ -52,24 +114,12 @@ jQuery.fn.extend({
       .each(function(){
         
         var input =this;
-        var jInput =jQuery(this);
+        var jInput =$(this);
         
-        var customInputId =jQuery.uniqueId();
+        var customInputId =$.uniqueId();
         var inputClass =input.className;
         var inputType =input.getAttribute( 'type');
         var inputStyle =input.getAttribute( 'style');
-
-        /*
-        if( jQuery.browser.msie || jQuery.browser.opera) {
-          
-          jInput.hideFromCanvas();
-          
-        } else {
-          // other browsers manage event triggering well, so we can
-          //  safely hide the checkboxes or radioboxes.
-          jInput.hide();
-        }
-        */
         
         jInput
           // hide input
@@ -78,7 +128,7 @@ jQuery.fn.extend({
           .after( '<div id="' +customInputId +'" class="' +inputClass +'" style="' +(inputStyle ===null ? '' : inputStyle) +'"></div>');
           
         var customInput =document.getElementById( customInputId);
-        var jCustomInput =jQuery(customInput);
+        var jCustomInput =$(customInput);
         
         jCustomInput
           // reference original input element
@@ -87,9 +137,13 @@ jQuery.fn.extend({
           .data( '__checkbox', true)
           // save options
           .data( '__options', options);
+          
+        jInput
+          // reference custom input element
+          .data( '__customInput', customInput);
         
         // transfer these events to the original input element
-        jQuery.transferEvents(
+        $.transferEvents(
           [
             'mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'dblclick',
             'mousedown', 'mouseup', 'mousemove', 'keydown', 'keypress', 'keyup'
@@ -104,23 +158,10 @@ jQuery.fn.extend({
             // remove custom input
             jCustomInput.remove();
           });
-          
-        function updateStatus() {
-          // assign checked class if input is checked
-          if( input.checked)
-            jCustomInput.attr( 'checked', 'yes');
-          else
-            jCustomInput.removeAttr( 'checked');
-            
-          if( jQuery.browser.msie)
-            // BUG: IE8 fails to draw background change until
-            //  mouse is out of the element.
-            jCustomInput.hide().show();
-        };
         
         // update status when document is ready
-        jQuery(document).ready(function(){
-          updateStatus();
+        $(document).ready(function(){
+          updateStatus( input);
         });
 
         // listen to events on original input
@@ -128,35 +169,12 @@ jQuery.fn.extend({
           // handle clicks
           .bind( 'click', function(e){
             if( inputType =='radio') {
-              // see if radio box has any name set
-              var name =input.getAttribute( 'name');
-              if( name ===null)
-                return;// name attribute not specified
-                
-              // trigger change on all other radioboxes with same name
-              for( var i =0; i < input.form.elements.length; ++i) {
-                var elem =input.form.elements[i];
-                
-                if( elem.nodeName !='INPUT')
-                  continue;// skip non-input elements
-                if( elem.getAttribute( 'type') !='radio')
-                  continue;// skip non-radio inputs
-                if( elem.getAttribute( 'name') !=name)
-                  continue;// skip radioboxes with another name
-                if( elem ==input)
-                  continue;// skip current input
-                if( !elem.checked)
-                  continue;// skip unchecked radio boxes
-                  
-                // uncheck radio box
-                elem.checked =false;
-                
-                // trigger change
-                jQuery(elem).trigger( 'change');
-              }
+              // trigger change on all other elements to reflect internal
+              //  changes.
+              formReflectRadioboxChanges( input);
             }
             
-            if( jQuery.browser.opera) {
+            if( $.browser.opera) {
               // BUG: Opera has trouble changing checked state for hidden
               //  checkboxes. To workaround this, we explicitly will negate
               //  current checkbox state.
@@ -170,7 +188,7 @@ jQuery.fn.extend({
               jInput.trigger( 'change');
             }
             
-            if( jQuery.browser.msie) {
+            if( $.browser.msie) {
               // BUG: IE does not trigger change event
               //  when clicking checkbox directly, but fires when
               //  either clicking somewhere else or when clicking
@@ -189,7 +207,12 @@ jQuery.fn.extend({
           // handle state changes
           .bind( 'change', function(e){
             // reflect changes
-            updateStatus();
+            updateStatus( input);
+            
+            // if input type is radio
+            if( inputType =='radio')
+              // reflect changes on all other radio boxes
+              formReflectRadioboxChanges( input);
           });
 
         // listen to events on custom input
@@ -200,7 +223,7 @@ jQuery.fn.extend({
             jInput.trigger( 'click');
 
             // trigger change
-            if( !jQuery.browser.msie)
+            if( !$.browser.msie)
               // this event is being triggered during 'click'
               //  on original element.
               jInput.trigger( 'change');
@@ -212,13 +235,13 @@ jQuery.fn.extend({
         //  for hidden checkboxes or radio buttons if
         //  their label is clicked. Find any labels referring
         //  to current input and make them fire click event.
-        if( jQuery.browser.msie) {
+        if( $.browser.msie) {
           var id =input.getAttribute( 'id');
           
           if( id !==null) {
             // labels can be attached only to inputs with explicit
             //  "id" attribute.
-            jQuery( 'label[for="' +id +'"]')
+            $( 'label[for="' +id +'"]')
               .click( function(e){
                 // stop propagation
                 e.stopPropagation();
@@ -236,3 +259,5 @@ jQuery.fn.extend({
   }
   
 });
+
+})( jQuery);

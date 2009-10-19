@@ -113,15 +113,16 @@ jQuery.fn.extend({
       if( isAbsolutePositioned) {
         // restore positioning
         var originalOffsets =jMenu.data( '__originalOffsets');
-        
-        jMenu
-          // restore offsets
-          .css({
-            'top': originalOffsets.top,
-            'left': originalOffsets.left
-          })
-          // remove data
-          .removeData( '__originalOffsets')
+        if( originalOffsets !==undefined) {
+          jMenu
+            // restore offsets
+            .css({
+              'top': originalOffsets.top,
+              'left': originalOffsets.left
+            })
+            // remove data
+            .removeData( '__originalOffsets');
+        }
       }
       
       // clear menu's contents
