@@ -22,12 +22,15 @@
 
 if( typeof jQuery =='undefined')
   throw 'jQuery library is required';
-if( typeof jQuery.selectboxVersion =='undefined')
+
+(function($){
+  
+if( typeof $.selectboxVersion =='undefined')
   throw 'jQuery.selectbox library is required';
-if( typeof jQuery.viewportVersion =='undefined')
+if( typeof $.viewportVersion =='undefined')
   throw 'jQuery.viewport library is required';
 
-jQuery.fn.extend({
+$.fn.extend({
   
   // create standard select box
   simpleSelectbox: function( options) {
@@ -37,9 +40,9 @@ jQuery.fn.extend({
     // add presentation callbacks
     options.presentation ={
       // open callback
-      open: jQuery.fn.openSimpleSelectbox,
+      open: $.fn.openSimpleSelectbox,
       // close callback
-      close: jQuery.fn.closeSimpleSelectbox
+      close: $.fn.closeSimpleSelectbox
     };
     
     this.selectbox( options);
@@ -49,30 +52,30 @@ jQuery.fn.extend({
   openSimpleSelectbox: function() {
     this.assertSingle();
 
-    var jSbox =this;
+    var $sbox =this;
     // get menu object
-    var jMenu =jSbox._getSelectboxMenuObject();
-    var isAbsolutePositioned =( jMenu.css( 'position') =='absolute');
-    var options =jSbox.data( '__options');
+    var $menu =$sbox._getSelectboxMenuObject();
+    var isAbsolutePositioned =( $menu.css( 'position') =='absolute');
+    var options =$sbox.data( '__options');
     
     // stop all animations if such existed
-    jMenu.stop( true, true);
+    $menu.stop( true, true);
 
     // generate contents
-    jSbox._generateSimpleSelectboxMenu();
+    $sbox._generateSimpleSelectboxMenu();
 
     if( isAbsolutePositioned) {
       // show element to obtain correct css values
-      jMenu
+      $menu
         .show()
         // backup offsets
         .data( '__originalOffsets', {
-          'top': jMenu.css( 'top'),
-          'left': jMenu.css( 'left')
+          'top': $menu.css( 'top'),
+          'left': $menu.css( 'left')
         });
       
       // align to viewport
-      jMenu
+      $menu
         // align to viewport
         .alignToViewport({
           // hide after alignment
@@ -83,38 +86,37 @@ jQuery.fn.extend({
     
     // show menu object with specified effect
     switch( options.effect) {
-      case jQuery.SELECTBOX_EFFECT_SLIDE_OUT:
-        jMenu.show( 'fast');
+      case $.SELECTBOX_EFFECT_SLIDE_OUT:
+        $menu.show( 'fast');
       break;
-      case jQuery.SELECTBOX_EFFECT_SLIDE_DOWN:
-        jMenu.slideDown( 'fast');
+      case $.SELECTBOX_EFFECT_SLIDE_DOWN:
+        $menu.slideDown( 'fast');
       break;
-      case jQuery.SELECTBOX_EFFECT_FADE:
-        jMenu.fadeIn( 'fast');
+      case $.SELECTBOX_EFFECT_FADE:
+        $menu.fadeIn( 'fast');
       break;
-      case jQuery.SELECTBOX_EFFECT_NONE:
+      case $.SELECTBOX_EFFECT_NONE:
       default:
-        jMenu.show();
+        $menu.show();
       break;
     }
-    
   },
   
   // close select box
   closeSimpleSelectbox: function() {
     this.assertSingle();
     
-    var jSbox =this;
-    var jMenu =jSbox._getSelectboxMenuObject();
-    var isAbsolutePositioned =( jMenu.css( 'position') =='absolute');
-    var options =jSbox.data( '__options');
+    var $sbox =this;
+    var $menu =$sbox._getSelectboxMenuObject();
+    var isAbsolutePositioned =( $menu.css( 'position') =='absolute');
+    var options =$sbox.data( '__options');
     
     function postHide() {
       if( isAbsolutePositioned) {
         // restore positioning
-        var originalOffsets =jMenu.data( '__originalOffsets');
+        var originalOffsets =$menu.data( '__originalOffsets');
         if( originalOffsets !==undefined) {
-          jMenu
+          $menu
             // restore offsets
             .css({
               'top': originalOffsets.top,
@@ -126,7 +128,7 @@ jQuery.fn.extend({
       }
       
       // clear menu's contents
-      jMenu
+      $menu
         .html( '')
         // hide completely (this fixes bug when element's parent is being hidden before
         //  it's animation has completed. in that case element remains visible on the screen)
@@ -134,20 +136,20 @@ jQuery.fn.extend({
     }
     
     // stop all animations if such existed
-    jMenu.stop( true, true);
+    $menu.stop( true, true);
     
     // hide menu according to specified effect
     switch( options.effect) {
-      case jQuery.SELECTBOX_EFFECT_SLIDE_OUT:
-        jMenu.hide( 'fast', postHide);
+      case $.SELECTBOX_EFFECT_SLIDE_OUT:
+        $menu.hide( 'fast', postHide);
       break;
-      case jQuery.SELECTBOX_EFFECT_SLIDE_DOWN:
-        jMenu.slideUp( 'fast', postHide);
+      case $.SELECTBOX_EFFECT_SLIDE_DOWN:
+        $menu.slideUp( 'fast', postHide);
       break;
-      case jQuery.SELECTBOX_EFFECT_FADE:
-        jMenu.fadeOut( 'fast', postHide);
+      case $.SELECTBOX_EFFECT_FADE:
+        $menu.fadeOut( 'fast', postHide);
       break;
-      case jQuery.SELECTBOX_EFFECT_NONE:
+      case $.SELECTBOX_EFFECT_NONE:
       default:
         postHide();
       break;
@@ -158,17 +160,17 @@ jQuery.fn.extend({
   _generateSimpleSelectboxMenu: function() {
     this.assertSingle();
 
-    var jSbox =this;
-    var elem =jSbox.data( '__sbox');
+    var $sbox =this;
+    var elem =$sbox.data( '__sbox');
     var multi =elem.multiple;
     
-    var jMenu =jSbox._getSelectboxMenuObject();
+    var $menu =$sbox._getSelectboxMenuObject();
 
     var html ='';
     var i;
-	var opt;
+    var opt;
     for( i =0; i < elem.options.length; ++i) {
-		opt =elem.options[i];
+      opt =elem.options[i];
       html += '<div' +((multi ? elem.options[i].selected : elem.selectedIndex ==i) ? ' class="selected"' :'') +'>' +
                 (multi ? '<div class="checkbox"></div>' :'') +
                 '<div class="label">' +(opt.label ? opt.label : opt.text) +'</div>' +
@@ -179,36 +181,38 @@ jQuery.fn.extend({
     i =0;
     
     // set menu object contents
-    jMenu
+    $menu
       .html( html)
       .find( '> div')
       .each( function(){
-        var jThis =jQuery(this);
+        var $this =$(this);
         
         // store option
-        jThis.data( '__option', elem.options[ i++]);
+        $this.data( '__option', elem.options[ i++]);
       })
       .click( function(e){
-        var jThis =jQuery(this);
-        var option =jThis.data( '__option');
+        var $this =$(this);
+        var option =$this.data( '__option');
         
         if( !option) {
-          jThis.remove();// remove current element
+          $this.remove();// remove current element
           return;// this option was removed
         }
         
         // check option
-        jSbox.toggleSelectboxOption( option);
+        $sbox.toggleSelectboxOption( option);
         
         if( !multi) {
           // close menu
-          jSbox.closeSelectbox();
+          $sbox.closeSelectbox();
           
         } else
-          jSbox._generateSimpleSelectboxMenu();
+          $sbox._generateSimpleSelectboxMenu();
           
         e.stopPropagation();
       });
   }
   
 });
+
+})( jQuery);

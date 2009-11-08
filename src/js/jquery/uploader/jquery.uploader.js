@@ -140,7 +140,6 @@ jQuery.fn.extend({
         'upload_url': options.url,
         'flash_url': jQuery.uploaderConfig.swfUrl,
         'file_post_name': options.name,
-        'post_params': options.requestData,
         'file_queue_limit': options.maxQueue,
         'http_success': [200, 201, 202],
         'file_types': options.fileTypes,
@@ -209,6 +208,14 @@ jQuery.fn.extend({
             'swfu': this,
             'file': file
           });
+          
+          // set post params
+          if( typeof options.requestData =='function')
+            // call callback function
+            this.setPostParams( options.requestData());
+          else
+            // pass specified parameters directly
+            this.setPostParams( options.requestData);
         },
         
         // file upload in progress

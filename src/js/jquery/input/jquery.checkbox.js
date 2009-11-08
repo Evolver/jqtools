@@ -78,17 +78,17 @@ function formReflectRadioboxChanges( input) {
 // reflect single box change
 function updateStatus( input) {
   // assign checked class if input is checked
-  var jCustomInput =$($(input).data( '__customInput'));
+  var $customInput =$($(input).data( '__customInput'));
   
   if( input.checked)
-    jCustomInput.attr( 'checked', 'yes');
+    $customInput.attr( 'checked', 'yes');
   else
-    jCustomInput.removeAttr( 'checked');
+    $customInput.removeAttr( 'checked');
     
   if( $.browser.msie)
     // BUG: IE8 fails to draw background change until
     //  mouse is out of the element.
-    jCustomInput.hide().show();
+    $customInput.hide().show();
 }
 
 // extend fn
@@ -114,23 +114,27 @@ $.fn.extend({
       .each(function(){
         
         var input =this;
-        var jInput =$(this);
+        var $input =$(this);
+        
+        if( $input.data( '__checkbox') !==undefined)
+          // already initialized
+          return;
         
         var customInputId =$.uniqueId();
         var inputClass =input.className;
         var inputType =input.getAttribute( 'type');
         var inputStyle =input.getAttribute( 'style');
         
-        jInput
+        $input
           // hide input
           .hide()
           // insert table right after checkbox object
           .after( '<div id="' +customInputId +'" class="' +inputClass +'" style="' +(inputStyle ===null ? '' : inputStyle) +'"></div>');
           
         var customInput =document.getElementById( customInputId);
-        var jCustomInput =$(customInput);
+        var $customInput =$(customInput);
         
-        jCustomInput
+        $customInput
           // reference original input element
           .data( '__input', input)
           // mark as textinput
@@ -138,7 +142,7 @@ $.fn.extend({
           // save options
           .data( '__options', options);
           
-        jInput
+        $input
           // reference custom input element
           .data( '__customInput', customInput);
         
@@ -152,11 +156,11 @@ $.fn.extend({
           input);
           
         // listen to events
-        jInput
+        $input
           // cleanup when removed
           .bind( 'remove', function(e){
             // remove custom input
-            jCustomInput.remove();
+            $customInput.remove();
           });
         
         // update status when document is ready
@@ -165,7 +169,7 @@ $.fn.extend({
         });
 
         // listen to events on original input
-        jInput
+        $input
           // handle clicks
           .bind( 'click', function(e){
             if( inputType =='radio') {
@@ -185,7 +189,7 @@ $.fn.extend({
               
               // fire additional change event because opera does not
               //  fire change event when clicking checkboxes' label.
-              jInput.trigger( 'change');
+              $input.trigger( 'change');
             }
             
             if( $.browser.msie) {
@@ -195,7 +199,7 @@ $.fn.extend({
               //  checkboxes label (BUG). We fire additional change
               //  event here to workaround this.
               function triggerChange() {
-                jInput.trigger( 'change');
+                $input.trigger( 'change');
               };
               
               // this makes change event to be triggered after click
@@ -216,17 +220,17 @@ $.fn.extend({
           });
 
         // listen to events on custom input
-        jCustomInput
+        $customInput
           .bind( 'click', function(e){
             // trigger click. Since this does not trigger 'change',
             //  trigger 'change' event also.
-            jInput.trigger( 'click');
+            $input.trigger( 'click');
 
             // trigger change
             if( !$.browser.msie)
               // this event is being triggered during 'click'
               //  on original element.
-              jInput.trigger( 'change');
+              $input.trigger( 'change');
               
             e.stopPropagation();
           });
@@ -249,7 +253,7 @@ $.fn.extend({
                 e.preventDefault();
                 
                 // trigger click event on a related input
-                jInput.trigger( 'click');
+                $input.trigger( 'click');
               });
           }
         }

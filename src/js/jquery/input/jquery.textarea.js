@@ -22,16 +22,17 @@
 
 if( typeof jQuery =='undefined')
   throw 'jQuery library is required';
-if( typeof jQuery.utilVersion =='undefined')
+
+(function($){
+  
+if( typeof $.utilVersion =='undefined')
   throw 'jQuery.util library is required';
 
-jQuery.extend({
-  
+$.extend({
   textareaVersion: 1.0
-  
 });
 
-jQuery.fn.extend({
+$.fn.extend({
   
   textarea: function( options) {
     
@@ -51,9 +52,13 @@ jQuery.fn.extend({
       .each(function(){
         
         var input =this;
-        var jInput =jQuery(this);
+        var $input =$(this);
         
-        var customInputId =jQuery.uniqueId();
+        if( $input.data( '__textarea') !==undefined)
+          // already initialized
+          return;
+        
+        var customInputId =$.uniqueId();
         var inputClass =input.className;
         var inputValue =input.getAttribute( 'value');
         var inputStyle =input.getAttribute( 'style');
@@ -61,7 +66,7 @@ jQuery.fn.extend({
         if( inputValue ===null)
           inputValue ='';
         
-        jInput
+        $input
           // hide input
           .hide()
           // insert table right after select box object
@@ -88,22 +93,22 @@ jQuery.fn.extend({
           );
           
         var customInput =document.getElementById( customInputId);
-        var jCustomInput =jQuery(customInput);
+        var $customInput =$(customInput);
         
-        jCustomInput
+        $customInput
           // reference original textarea element
           .data( '__input', input)
-          // mark as textinput
-          .data( '__textinput', true)
+          // mark as textarea
+          .data( '__textarea', true)
           // save options
           .data( '__options', options);
         
         // get input object of custom text input
-        var jCustomInputObject =jCustomInput._getTextinputTextareaObject();
-        var customInputObject =jCustomInputObject.get(0);
+        var $customInputObject =$customInput._getTextinputTextareaObject();
+        var customInputObject =$customInputObject.get(0);
         
         // transfer these events to the original textarea element
-        jQuery.transferEvents(
+        $.transferEvents(
           [
             'mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'dblclick',
             'mousedown', 'mouseup', 'mousemove', 'keydown', 'keypress', 'keyup', 'click'
@@ -112,7 +117,7 @@ jQuery.fn.extend({
           input);
           
         // listen to events
-        jInput
+        $input
           // listen to change events
           .bind( 'change', function( e, data){
             if( data ===undefined) {
@@ -120,13 +125,13 @@ jQuery.fn.extend({
               customInputObject.value =input.value;
               
               // reflect changes on a custom input object
-              jCustomInputObject.trigger( 'change', [{'internal':true}]);
+              $customInputObject.trigger( 'change', [{'internal':true}]);
             }
           })
           // cleanup when removed
           .bind( 'remove', function(e){
             // remove custom input
-            jCustomInput.remove();
+            $customInput.remove();
           });
 
         // use hints?
@@ -139,7 +144,7 @@ jQuery.fn.extend({
               // see if hint value is specified
               if( inputValue !='') {
                 // display hint
-                jCustomInputObject.addClass( 'hint');
+                $customInputObject.addClass( 'hint');
                 customInputObject.value =inputValue;
               }
             }
@@ -160,31 +165,31 @@ jQuery.fn.extend({
             customInputObject.value =input.value;
           }
           
-          jCustomInputObject
+          $customInputObject
             // show hint when blur
             .bind( 'blur', function(e){
               showHint();
               
-              var e =jQuery.Event( 'blur');
+              var e =$.Event( 'blur');
               e.preventDefault();
               
               // transfer event
-              jQuery.event.trigger( e, null, input);
+              $.event.trigger( e, null, input);
             })
             // hide hint when focused
             .bind( 'focus', function() {
               // see if hint is being displayed
-              if( jCustomInputObject.hasClass( 'hint')) {
+              if( $customInputObject.hasClass( 'hint')) {
                 // hide hint and show no value
-                jCustomInputObject.removeClass( 'hint');
+                $customInputObject.removeClass( 'hint');
                 customInputObject.value ='';
               }
               
-              var e =jQuery.Event( 'focus');
+              var e =$.Event( 'focus');
               e.preventDefault();
               
               // transfer event
-              jQuery.event.trigger( e, null, input);
+              $.event.trigger( e, null, input);
             });
             
         } else {
@@ -192,7 +197,7 @@ jQuery.fn.extend({
           customInputObject.value =input.value;
         }
           
-        jCustomInputObject
+        $customInputObject
           // trigger change on every keydown
           .bind( 'keydown', function(e){
             
@@ -201,11 +206,11 @@ jQuery.fn.extend({
               // trigger change after some time.
               //  This handles the situation when last pressed key is not being
               //  included into the changes.
-              jCustomInputObject.trigger( 'change');
+              $customInputObject.trigger( 'change');
             }, 0);
             
             // instant update without the last key pressed
-            jCustomInputObject.trigger( 'change');
+            $customInputObject.trigger( 'change');
             
           })
           // reflect changes on a target element
@@ -215,7 +220,7 @@ jQuery.fn.extend({
               input.value =customInputObject.value;
               
               // reflect changes on an original input object
-              jInput.trigger( 'change', [{'internal':true}]);
+              $input.trigger( 'change', [{'internal':true}]);
               
             }
           });
@@ -232,3 +237,5 @@ jQuery.fn.extend({
   }
   
 });
+
+})( jQuery);

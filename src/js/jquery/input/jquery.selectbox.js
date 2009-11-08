@@ -22,10 +22,13 @@
 
 if( typeof jQuery =='undefined')
   throw 'jQuery library is required';
-if( typeof jQuery.utilVersion =='undefined')
+
+(function($){
+  
+if( typeof $.utilVersion =='undefined')
   throw 'jQuery.util library is required';
 
-jQuery.extend({
+$.extend({
   
   // library version
   selectboxVersion: 1.0,
@@ -38,7 +41,7 @@ jQuery.extend({
   
 });
 
-jQuery.fn.extend({
+$.fn.extend({
   
   // initialize custom select box
   selectbox: function( options) {
@@ -46,14 +49,14 @@ jQuery.fn.extend({
       options ={};
       
     if( options.effect ===undefined)
-      options.effect =jQuery.SELECTBOX_EFFECT_NONE;
+      options.effect =$.SELECTBOX_EFFECT_NONE;
       
     else switch( options.effect) {
       // see if valid effect passed
-      case jQuery.SELECTBOX_EFFECT_NONE:
-      case jQuery.SELECTBOX_EFFECT_FADE:
-      case jQuery.SELECTBOX_EFFECT_SLIDE_OUT:
-      case jQuery.SELECTBOX_EFFECT_SLIDE_DOWN:
+      case $.SELECTBOX_EFFECT_NONE:
+      case $.SELECTBOX_EFFECT_FADE:
+      case $.SELECTBOX_EFFECT_SLIDE_OUT:
+      case $.SELECTBOX_EFFECT_SLIDE_DOWN:
       break;
       // invalid effect
       default:
@@ -93,6 +96,10 @@ jQuery.fn.extend({
               values.push( opt.label ? opt.label : opt.text);
           }
           
+          if( values.length ==0)
+            // show dash if no values selected
+            return '-';
+          
           // return comma-joined list of selected values
           return values.join( ', ');
           
@@ -115,14 +122,18 @@ jQuery.fn.extend({
       .each( function(){
         
         var sbox =this;
-        var jSbox =jQuery(this);
+        var $sbox =$(this);
+        
+        if( $sbox.data( '__customSbox') !==undefined)
+          // already initialized
+          return;
         
         // get select box input name
-        var customSboxId =jQuery.uniqueId();
+        var customSboxId =$.uniqueId();
         var sboxClass =sbox.className;
         var sboxStyle =sbox.getAttribute( 'style');
 
-        jSbox
+        $sbox
           // hide select box
           .hide()
           // insert table right after select box object
@@ -151,30 +162,43 @@ jQuery.fn.extend({
           
 
         var customSbox =document.getElementById( customSboxId);
-        var jCustomSbox =jQuery( customSbox);
+        var $customSbox =$( customSbox);
+        
+        // see if multiple value selection is supported
+        if( sbox.multiple) {
+          // add 'multiple' class to TBODY element
+          $customSbox.find( '> tbody').addClass( 'multi');
+        }
         
         // store custom select box object reference on an original select object.
         //  this reference can be used by custom views to reference custom sbox object.
-        jSbox.data( '__customSbox', customSbox);
+        $sbox.data( '__customSbox', customSbox);
 
-        jCustomSbox
+        $customSbox
           // reference select box
           .data( '__sbox', sbox)
-          // initially hide menu object
+          // get menu object
           ._getSelectboxMenuObject()
+          // avoid trigger of select box close when
+          //  clicked on menu
+          .click(function(e){
+            // do not propagate click
+            e.stopPropagation();
+          })
+          // initially hide menu object
           .hide();
         
         // bind click
-        jCustomSbox.click(function(e){
+        $customSbox.click(function(e){
           
-          var wasOpened =jCustomSbox.isSelectboxOpened();
+          var wasOpened =$customSbox.isSelectboxOpened();
           
           // trigger on select box
-          jSbox.trigger( jQuery.Event( 'click'));
+          $sbox.trigger( $.Event( 'click'));
           
           // toggle select box
           if( !wasOpened)
-            jCustomSbox.openSelectbox();
+            $customSbox.openSelectbox();
           
           // stop event propagation
           e.stopPropagation();
@@ -185,16 +209,16 @@ jQuery.fn.extend({
         // not register (at least i tested mouseover and mouseout)
         // events and does not pass them to sbox object. This is
         // not Webkit-specific bug, Safari handles this well.
-        jQuery.transferEvents(
+        $.transferEvents(
           [
             'mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'dblclick',
             'mousedown', 'mouseup', 'mousemove', 'keydown', 'keypress', 'keyup', 'blur',
             'focus'
           ],
-          jCustomSbox._getSelectboxValueObject().get(0),
+          $customSbox._getSelectboxValueObject().get(0),
           sbox);
         
-        jCustomSbox
+        $customSbox
           // store config
           .data( '__options', options)
           // show initial value of select box
@@ -202,32 +226,32 @@ jQuery.fn.extend({
           
         // document click handler
         var clickFn =function(e){
-          if( jCustomSbox.isSelectboxOpened())
-            jCustomSbox.closeSelectbox();
+          if( $customSbox.isSelectboxOpened())
+            $customSbox.closeSelectbox();
         };
           
         // close select box when user clicks document
-        jQuery(document).click( clickFn);
+        $(document).click( clickFn);
         
         // cleanup after custom select box is removed
-        jCustomSbox
+        $customSbox
           .bind( 'remove', function( e){
             // unbind click handler from document
-            jQuery(document).unbind( 'click', clickFn);
+            $(document).unbind( 'click', clickFn);
             // deinitialize presentation layer
             options.presentation.cleanup.call( customSbox);
           });
           
-        jSbox
+        $sbox
           // reflect changes
           .bind( 'change', function( e) {
             // update selectbox value
-            jCustomSbox._updateSelectboxValue( false);
+            $customSbox._updateSelectboxValue( false);
           })
           // cleanup after select box object is removed
           .bind( 'remove', function( e){
             // remove custom select box
-            jCustomSbox.remove();
+            $customSbox.remove();
           });
           
         // initialize presentation layer
@@ -241,29 +265,29 @@ jQuery.fn.extend({
   toggleSelectbox: function() {
     this.assertSingle();
     
-    var jSbox =this;
+    var $sbox =this;
     
-    if( !jSbox.isSelectboxOpened())
-      jSbox.openSelectbox();
+    if( !$sbox.isSelectboxOpened())
+      $sbox.openSelectbox();
     else
-      jSbox.closeSelectbox();
+      $sbox.closeSelectbox();
   },
   
   // open select box
   openSelectbox: function() {
     this.assertSingle();
  
-    var jSbox =this;
-    var options =jSbox.data( '__options');
+    var $sbox =this;
+    var options =$sbox.data( '__options');
     
     // open overlay for selection of options
     options.presentation.open.call( this);
     
     // mark select box as opened
-    jSbox.data( '__opened', true);
+    $sbox.data( '__opened', true);
     
     // add opened class
-    jSbox.find( '> tbody').addClass( 'opened');
+    $sbox.find( '> tbody').addClass( 'opened');
   },
   
   // see if select box is opened
@@ -277,25 +301,25 @@ jQuery.fn.extend({
   closeSelectbox: function() {
     this.assertSingle();
     
-    var jSbox =this;
-    var options =jSbox.data( '__options');
+    var $sbox =this;
+    var options =$sbox.data( '__options');
     
     // open overlay for selection of options
     options.presentation.close.call( this);
     
     // remove opened flag
-    jSbox.removeData( '__opened');
+    $sbox.removeData( '__opened');
     
     // remove opened class
-    jSbox.find( '> tbody').removeClass( 'opened');
+    $sbox.find( '> tbody').removeClass( 'opened');
   },
   
   // check select box value
   toggleSelectboxOption: function( option) {
     this.assertSingle();
 
-    var jSbox =this;
-    var elem =jSbox.data( '__sbox');
+    var $sbox =this;
+    var elem =$sbox.data( '__sbox');
     var multi =elem.multiple;
       
     if( !multi) {
@@ -312,6 +336,23 @@ jQuery.fn.extend({
       option.selected =!option.selected;
       
     this._updateSelectboxValue( true);
+  },
+  
+  // check select box option by value
+  toggleSelectboxOptionByValue: function( value) {
+    this.assertSingle();
+
+    var $sbox =this;
+    var elem =$sbox.data( '__sbox');
+      
+    // search for an option with specified value
+    for( var i =0; i < elem.options.length; ++i) {
+      if( elem.options[ i].value ==value) {
+        // toggle option
+        $sbox.toggleSelectboxOption( elem.options[ i]);
+        break;
+      }
+    }
   },
   
   // get select box menu object
@@ -335,19 +376,25 @@ jQuery.fn.extend({
     if( triggerChange ===undefined)
       triggerChange =false;
     
-    var jSbox =this;
-    var elem =jSbox.data( '__sbox');
+    var $sbox =this;
+    var elem =$sbox.data( '__sbox');
     var multi =elem.multiple;
-    var options =jSbox.data( '__options');
+    var options =$sbox.data( '__options');
+    
+    // get select box new value
+    var value =options.makeValue.call( elem);
     
     // collect selected options
-    jSbox
+    $sbox
       ._getSelectboxValueObject()
-      .html( options.makeValue.call( elem));
+      .html( value)
+      .attr( 'title', value);
       
     // trigger change event only if requested
     if( triggerChange)
-      jQuery(elem).trigger( 'change');
+      $(elem).trigger( 'change');
   }
   
 });
+
+})( jQuery);

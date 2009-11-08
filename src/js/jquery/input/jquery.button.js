@@ -22,16 +22,19 @@
 
 if( typeof jQuery =='undefined')
   throw 'jQuery library is required';
-if( typeof jQuery.utilVersion =='undefined')
+
+(function($){
+  
+if( typeof $.utilVersion =='undefined')
   throw 'jQuery.util library is required';
 
-jQuery.extend({
+$.extend({
   
   buttonVersion: 1.0
   
 });
 
-jQuery.fn.extend({
+$.fn.extend({
   
   button: function( options) {
     
@@ -60,20 +63,24 @@ jQuery.fn.extend({
       .each(function(){
         
         var input =this;
-        var jInput =jQuery(this);
+        var $input =$(this);
         
-        var customInputId =jQuery.uniqueId();
+        if( $input.data( '__button') !==undefined)
+          // already initialized
+          return;
+        
+        var customInputId =$.uniqueId();
         var inputClass =input.className;
         var inputStyle =input.getAttribute( 'style');
         
         if( this.nodeName =='BUTTON')
           // get inner html to copy as the button's label
-          var html =jQuery(this).html();
+          var html =$(this).html();
         else
           // copy the "value" property as the label
           var html =this.getAttribute( 'value');
         
-        jInput
+        $input
           // hide input
           .hide()
           // insert table right after select box object
@@ -100,9 +107,9 @@ jQuery.fn.extend({
           );
           
         var customInput =document.getElementById( customInputId);
-        var jCustomInput =jQuery(customInput);
+        var $customInput =$(customInput);
         
-        jCustomInput
+        $customInput
           // reference original input element
           .data( '__input', input)
           // mark as button
@@ -111,7 +118,7 @@ jQuery.fn.extend({
           .data( '__options', options);
         
         // transfer these events to the original input element
-        jQuery.transferEvents(
+        $.transferEvents(
           [
             'mouseover', 'mouseout', 'mouseenter', 'mouseleave', 'dblclick',
             'mousedown', 'mouseup', 'mousemove', 'keydown', 'keypress', 'keyup', 'click'
@@ -120,31 +127,31 @@ jQuery.fn.extend({
           input);
           
         // listen to events
-        jInput
+        $input
           // cleanup when removed
           .bind( 'remove', function(e){
             // remove custom input
-            jCustomInput.remove();
+            $customInput.remove();
           });
           
         // control pressed/released states
-        jCustomInput
+        $customInput
           .bind( 'mousedown', function(e){
-            jCustomInput
+            $customInput
               .attr( 'pressed', 'yes')
               .data( '__holding', true);
           })
           .bind( 'mouseup', function(e){
-            jCustomInput
+            $customInput
               .removeAttr( 'pressed')
               .removeData( '__holding');
           })
           .bind( 'mouseenter', function(e){
-            if( jCustomInput.data( '__holding'))
-              jCustomInput.attr( 'pressed', 'yes');
+            if( $customInput.data( '__holding'))
+              $customInput.attr( 'pressed', 'yes');
           })
           .bind( 'mouseleave', function(e){
-            jCustomInput.removeAttr( 'pressed');
+            $customInput.removeAttr( 'pressed');
           });
 
       });
@@ -153,3 +160,5 @@ jQuery.fn.extend({
   }
   
 });
+
+})( jQuery);
