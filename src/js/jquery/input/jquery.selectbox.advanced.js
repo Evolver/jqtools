@@ -81,6 +81,10 @@ $.fn.extend({
     if( options.uncheckAllButtonCaption ===undefined)
       options.uncheckAllButtonCaption ='Uncheck All';
       
+    // 'show all' button caption
+    if( options.showAllButtonCaption ===undefined)
+      options.showAllButtonCaption ='Show all';
+      
     // background image to show
     if( options.backgroundImageUrl ===undefined)
       options.backgroundImageUrl =null;
@@ -277,16 +281,30 @@ $.fn.extend({
     }
     
     // add last button, that will show all options
-    html += '<a class="letter" href="javascript:;">...</a>';
+    html += '<a class="all" href="javascript:;">' +$.escapeHTML( options.showAllButtonCaption) +'</a>';
     
     // assign alphabet
     $alphabet.html( html);
     
-    // find all anchors
-    $alphabet.find( '> a').bind( 'click', function( e){
+    // find all letter links
+    $alphabet.find( '> a.letter').bind( 'click', function( e){
+      var letter =$(this).html();
+      
       // assign a click handler
-      $sbox.filterAdvancedSelectboxOptionsByLetter( $(this).html());
+      $sbox.filterAdvancedSelectboxOptionsByLetter( letter);
 
+      // do not propagate event
+      e.stopPropagation();
+    });
+    
+    // find 'show all' button
+    $alphabet.find( '> a.all').bind( 'click', function( e){
+      // assign a click handler
+      $sbox.showAllAdvancedSelectboxOptions();
+      
+      // remove 'selected' class from all letters
+      $alphabet.find( '> a.letter.selected').removeClass( 'selected');
+      
       // do not propagate event
       e.stopPropagation();
     });
@@ -301,6 +319,9 @@ $.fn.extend({
     
     var $sbox =this;
     var $options =$sbox.find( '> .options');
+    
+    // select no letter
+    $sbox.selectAdvancedSelectboxLetter( null);
     
     // select box element
     var elem =$sbox.data( '__sbox');
@@ -438,41 +459,43 @@ $.fn.extend({
   filterAdvancedSelectboxOptionsByLetter: function( letter) {
     this.assertSingle();
     
+    // get objects
     var $sbox =this;
     var $menu =$sbox._getSelectboxMenuObject();
     
+    // select letter
+    $sbox.selectAdvancedSelectboxLetter( letter);
+    
     var elem =$sbox.data( '__sbox');
     
-    // see if letter is '...', and if is, show all options
-    if( letter =='...') {
-      $sbox.showAllAdvancedSelectboxOptions();
+    // gather all options that start with specified letter
+    var options =new Array();
+    var opt;
+    var i;
+    var val;
+    for( i =0; i < elem.options.length; ++i) {
+      opt =elem.options[i];
+      val =opt.text;
       
-    } else {
-      // gather all options that start with specified letter
-      var options =new Array();
-      var opt;
-      var i;
-      var val;
-      for( i =0; i < elem.options.length; ++i) {
-        opt =elem.options[i];
-        val =opt.text;
-        
-        if( val.substr( 0, 1).toUpperCase() ==letter)
-          // push option object
-          options.push( opt);
-      }
-      
-      // render options
-      $sbox.showAdvancedSelectboxOptions( options);
+      if( val.substr( 0, 1).toUpperCase() ==letter)
+        // push option object
+        options.push( opt);
     }
+    
+    // render options
+    $sbox.showAdvancedSelectboxOptions( options);
   },
   
   // filter options by search string
   filterAdvancedSelectboxOptionsBySearchString: function() {
     this.assertSingle();
     
+    // get objects
     var $sbox =this;
     var $menu =$sbox._getSelectboxMenuObject();
+    
+    // select no letter
+    $sbox.selectAdvancedSelectboxLetter( null);
     
     // get search string
     var $searchText =$menu.find( '> .search input[type="text"]');
@@ -595,6 +618,28 @@ $.fn.extend({
       $input.trigger( 'change');
       
     });
+  },
+  
+  // select letter
+  selectAdvancedSelectboxLetter: function( letter) {
+    this.assertSingle();
+
+    var $sbox =this;
+    var $menu =$sbox._getSelectboxMenuObject();
+    var $alphabet =$menu.find( '> .alphabet');
+    
+    // remove 'selected' class from all letters
+    $alphabet.find( '> a.letter.selected').removeClass( 'selected');
+    
+    if( letter !==null) {
+      // add 'selected' class
+      $alphabet.find( '> a.letter').each(function(){
+        var $this =$(this);
+        
+        if( $this.html() ==letter)
+          $this.addClass( 'selected');
+      });
+    }
   }
   
 });
