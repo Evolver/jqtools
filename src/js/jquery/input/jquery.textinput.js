@@ -149,7 +149,7 @@ $.fn.extend({
           });
 
         // use hints?
-        if( inputType !='password' && options.hint && input.getAttribute( 'data-nohint') !==null) {
+        if( inputType !='password' && options.hint && input.getAttribute( 'data-nohint') ===null) {
           // function to check if hint needs to be displayed,
           //  and if it does, hint is being displayed
           function showHint() {
