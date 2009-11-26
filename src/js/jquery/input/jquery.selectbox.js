@@ -315,8 +315,11 @@ $.fn.extend({
   },
   
   // check select box value
-  toggleSelectboxOption: function( option) {
+  toggleSelectboxOption: function( option, updateValue) {
     this.assertSingle();
+    
+    if( updateValue ===undefined)
+      updateValue =true;
 
     var $sbox =this;
     var elem =$sbox.data( '__sbox');
@@ -335,12 +338,16 @@ $.fn.extend({
       // mark option as one of selected options
       option.selected =!option.selected;
       
-    this._updateSelectboxValue( true);
+    if( updateValue)
+      $(elem).trigger( 'change');
   },
   
   // check select box option by value
-  toggleSelectboxOptionByValue: function( value) {
+  toggleSelectboxOptionByValue: function( value, updateValue) {
     this.assertSingle();
+    
+    if( updateValue ===undefined)
+      updateValue =true;
 
     var $sbox =this;
     var elem =$sbox.data( '__sbox');
@@ -349,10 +356,14 @@ $.fn.extend({
     for( var i =0; i < elem.options.length; ++i) {
       if( elem.options[ i].value ==value) {
         // toggle option
-        $sbox.toggleSelectboxOption( elem.options[ i]);
+        $sbox.toggleSelectboxOption( elem.options[ i], false);
         break;
       }
     }
+    
+    // update value if necessary
+    if( updateValue)
+      $(elem).trigger( 'change');
   },
   
   // get select box menu object

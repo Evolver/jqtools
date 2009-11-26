@@ -36,11 +36,7 @@ $.fn.extend({
   advancedSelectbox: function( options) {
     if( options ===undefined || typeof options !='object')
       options ={};
-      
-    // see if heading is set
-    if( options.heading ===undefined)
-      options.heading ='Select option(s):';
-      
+
     // see if menu init callback is set
     if( options.initMenuCallback ===undefined)
       options.initMenuCallback =function( sbox, menuObject){};
@@ -198,15 +194,18 @@ $.fn.extend({
 
     var $sbox =this;
     var $menu =$sbox._getSelectboxMenuObject();
+    var elem =$sbox.data( '__sbox');
     
     // get options
     var options =$sbox.data( '__options');
     
     // basic contents (layout)
     var html ='';
+    var heading =elem.getAttribute( 'data-caption');
     
-    if( options.heading !==null)
-      html += '<div class="heading">' +$.escapeHTML( options.heading) +'</div>';
+    // show heading if specified
+    if( heading !==null)
+      html += '<div class="heading">' +$.escapeHTML( heading) +'</div>';
       
     // append the rest of elements
     html += '<div class="alphabet"></div>' +
@@ -275,12 +274,13 @@ $.fn.extend({
     // render alphabet
     var html ='';
     
+    // add option alphabet
     for( i =0; i < alphabet.length; ++i) {
       chr =alphabet[i];
       html += '<a class="letter" href="javascript:;">' +chr +'</a> ';
     }
     
-    // add last button, that will show all options
+    // add button that will show all options
     html += '<a class="all" href="javascript:;">' +$.escapeHTML( options.showAllButtonCaption) +'</a>';
     
     // assign alphabet

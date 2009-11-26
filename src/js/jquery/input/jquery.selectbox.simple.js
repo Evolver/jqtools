@@ -37,6 +37,13 @@ $.fn.extend({
     if( options ===undefined || typeof options !='object')
       options ={};
       
+    if( options.selectAllLabel ===undefined)
+      options.selectAllLabel ='Check all';
+    if( options.deselectAllLabel ===undefined)
+      options.deselectAllLabel ='Uncheck all';
+    if( options.closeLabel ===undefined)
+      options.closeLabel ='Close';
+      
     // add presentation callbacks
     options.presentation ={
       // open callback
@@ -57,6 +64,7 @@ $.fn.extend({
     var $menu =$sbox._getSelectboxMenuObject();
     var isAbsolutePositioned =( $menu.css( 'position') =='absolute');
     var options =$sbox.data( '__options');
+    var elem =$sbox.data( '__sbox');
     
     // stop all animations if such existed
     $menu.stop( true, true);
@@ -65,6 +73,7 @@ $.fn.extend({
     $sbox._generateSimpleSelectboxMenu();
 
     if( isAbsolutePositioned) {
+      
       // show element to obtain correct css values
       $menu
         .show()
@@ -73,6 +82,55 @@ $.fn.extend({
           'top': $menu.css( 'top'),
           'left': $menu.css( 'left')
         });
+        
+      // BUG: annoying overflow bugfix for Opera 10 and IE7.
+      //       The bug is demonstrated at http://www.stepanov.lv/pub/opera/bugs/absolute_min-width.html
+      // ATTENTION: this bugfix is intended for the menu, the width of which is determined by the width
+      //   of option elements in div.menu > div.items. All other layouts will appear incorrectly in IE7,
+      //   because IE7 is so shit browser, that i found no possible way to correctly determine actual
+      //   width of content inside div.menu to properly resize it.
+      if(($.browser.msie && parseInt( $.browser.version) ==7) || $.browser.opera) {
+        // the purpose of this bugfix is to determine actual width of
+        //  div.menu content and assign that width explicitly, without
+        //  relying on min-width, because both browsers fail to properly
+        //  calculate div.menu width and properly draw scrollbars on content
+        //  overflow in given situation. Actuall, overflowing with scrollbars
+        //  involved is kinda fucked up in Opera and IE7.
+        
+        // remove absolute positioning
+        $menu.css({
+          'position': 'fixed'
+        });
+        
+        var menuWidth;
+        
+        // opera fix
+        if( $.browser.opera) {
+          // opera properly calculates menu width when menu's position is
+          //  fixed.
+          menuWidth =$menu.width();
+        }
+        
+        // IE fix
+        if( $.browser.msie) {
+          // IE 7 proves itself as complete shit, so we have to gather
+          //   width from the most wide option in the menu.
+          menuWidth =0;
+          // find widest option item
+          $menu.find( '> .items').each(function(){
+            var w =$(this).outerWidth( true);
+            if( w > menuWidth)
+              menuWidth =w;
+          });
+        }
+        
+        // restore absolute positioning and assign
+        //  actual width of an element
+        $menu.css({
+          'position': 'absolute',
+          'width': menuWidth +'px'
+        });
+      }
       
       // align to viewport
       $menu
@@ -80,7 +138,10 @@ $.fn.extend({
         .alignToViewport({
           // hide after alignment
           hide: true,
-          gap: 5 // 5 pixel viewport gap
+          // 5 pixel viewport gap
+          gap: 5,
+          // do not align vertically
+          verticalAlign: (elem.getAttribute( 'data-no-vertical-align') ===null ? true : false)
         });
     }
     
@@ -162,13 +223,30 @@ $.fn.extend({
 
     var $sbox =this;
     var elem =$sbox.data( '__sbox');
+    var options =$sbox.data( '__options');
     var multi =elem.multiple;
+    var hasToolbar =(multi && elem.options.length >4);
     
     var $menu =$sbox._getSelectboxMenuObject();
 
     var html ='';
+
+    // see if select box is in 'multiple' mode and there are more than four
+    //  options to select.
+    if( hasToolbar) {
+      // add toolbar with 'select all' and 'deselect all' buttons
+      html += '<div class="tools">' +
+                '<a href="javascript:;" class="select-all">' +$.escapeHTML( options.selectAllLabel) +'</a>' +
+                '<a href="javascript:;" class="deselect-all">' +$.escapeHTML( options.deselectAllLabel) +'</a>' +
+                '<a href="javascript:;" class="close">' +$.escapeHTML( options.closeLabel) +'</a>' +
+              '</div>';
+    }
+    
     var i;
     var opt;
+    // begin item container
+    html +='<div class="items">';
+    
     for( i =0; i < elem.options.length; ++i) {
       opt =elem.options[i];
       html += '<div' +((multi ? elem.options[i].selected : elem.selectedIndex ==i) ? ' class="selected"' :'') +'>' +
@@ -177,13 +255,16 @@ $.fn.extend({
               '</div>';
     }
     
+    // end item container
+    html +='</div>';
+    
     // reset index
     i =0;
     
     // set menu object contents
     $menu
       .html( html)
-      .find( '> div')
+      .find( '> .items > div')
       .each( function(){
         var $this =$(this);
         
@@ -206,11 +287,83 @@ $.fn.extend({
           // close menu
           $sbox.closeSelectbox();
           
-        } else
-          $sbox._generateSimpleSelectboxMenu();
+        } else {
+          // mark item as selected
+          if( option.selected)
+            $this.addClass( 'selected');
+          else
+            $this.removeClass( 'selected');
+        }
           
         e.stopPropagation();
       });
+      
+    if( hasToolbar) {
+      // toolbar has been added, bind tool handlers
+      $menu.find( '> .tools > .select-all').click( function(){
+        $sbox._checkAllSimpleSelectboxOptions();
+        
+        // regenerate menu
+        $sbox._generateSimpleSelectboxMenu();
+      });
+      $menu.find( '> .tools > .deselect-all').click( function(){
+        $sbox._uncheckAllSimpleSelectboxOptions();
+        
+        // regenerate menu
+        $sbox._generateSimpleSelectboxMenu();
+      });
+      $menu.find( '> .tools > .close').click( function(){
+        $sbox.closeSelectbox();
+      });
+    }
+  },
+  
+  // check all options
+  _checkAllSimpleSelectboxOptions: function() {
+    this.assertSingle();
+
+    var $sbox =this;
+    var elem =$sbox.data( '__sbox');
+    var options =$sbox.data( '__options');
+    var option;
+    
+    for( var i =0; i < elem.options.length; ++i) {
+      option =elem.options[ i];
+      
+      // see if option is already checked
+      if( option.selected)
+        continue;
+        
+      // toggle option
+      $sbox.toggleSelectboxOption( option, false);
+    }
+    
+    // update value
+    $(elem).trigger( 'change');
+  },
+  
+  // uncheck all options
+  _uncheckAllSimpleSelectboxOptions: function() {
+    this.assertSingle();
+
+    var $sbox =this;
+    var elem =$sbox.data( '__sbox');
+    var options =$sbox.data( '__options');
+    var option;
+    
+    for( var i =0; i < elem.options.length; ++i) {
+      option =elem.options[ i];
+      
+      // see if option is already unchecked
+      if( !option.selected)
+        continue;
+        
+      // toggle option
+      $sbox.toggleSelectboxOption( option, false);
+    }
+    
+    // update value
+    $(elem).trigger( 'change');
   }
   
 });
